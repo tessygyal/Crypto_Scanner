@@ -14,7 +14,8 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 | **M3 — Risk checker** | ✅ Done (offline link analysis + scheme scorecard) |
 | **M4 — Check history** | ✅ Done (view, re-run, delete) |
 | **M5 — Community reports** | ✅ Done (create, read, update, delete, location) |
-| M6 + | Planned (see the project plan) |
+| **M6 — Community map** | ✅ Done (OpenStreetMap, no API key) |
+| M7 + | Planned (see the project plan) |
 
 **M0 delivers:** project structure (`app/` + `src/`), theme, TanStack Query provider, Supabase client, environment-variable validation, shared UI states (loading / success / empty / error), visible disclaimer, `eas.json` build profiles, Jest + ESLint, and a temporary setup-status home screen that checks the Supabase connection. The auth flow and tabs replace that screen in M1.
 
@@ -34,6 +35,16 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 - **Approximate location only.** "Use my approximate location" asks for permission (handling refused, blocked → Settings, and location turned off), uses low accuracy, and rounds to 2 decimal places (about 1 km) before anything is saved. Location is optional.
 - **Moderation.** New reports are *Pending review* and visible only to their author. A moderator approves or rejects them in the Supabase dashboard (Table Editor → `reports` → `status`). Editing a report sends it back to *Pending review* (enforced by the database, see M2).
 - Approved reports show the reporter's **display name**, never their email.
+
+**M6 delivers:** the Map tab. Approved reports with a location appear as markers (reports at the same rounded spot are grouped, with a count). Tapping a marker lists those reports; each opens its detail. **Show my area** centres the map on the user's approximate location (with permission handling). A **Places** list under the map gives the same information without the map, for screen readers.
+
+### Map: why OpenStreetMap
+
+The map is [Leaflet](https://leafletjs.com) with [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles, inside a WebView (Android/iOS) or an iframe (web). It was chosen over Google Maps because Google Maps on Android needs an API key linked to a Google Cloud **billing account**, and without one the map is blank in the APK/AAB. This option needs **no key**, and works in Expo Go, in EAS builds and on the web.
+
+- **Attribution** "© OpenStreetMap contributors" is shown on the map, as the licence requires. The tiles follow OpenStreetMap's [tile usage policy](https://operations.osmfoundation.org/policies/tiles/), which is fine for a student project with light use; a public launch with many users should switch to a commercial tile provider.
+- **Security:** Leaflet 1.9.4 is loaded from unpkg pinned with Subresource Integrity hashes, so a modified copy will not run. The map page receives only rounded coordinates and counts — never report text or ids — as escaped JSON, and messages from the page are validated before use.
+- The map needs an internet connection for its tiles; if Leaflet cannot load, the map says so.
 
 ## Features (by priority)
 
@@ -239,6 +250,8 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 - **What AI did in M1:** wrote the auth service, session context, auth hooks, form schemas, the auth and tab screens, and the unit tests (48 in total). It also found and fixed two bugs during browser testing: opening the app signed out showed an "Unmatched Route" page, and the tab labels were clipped.
 - **How M1 was checked:** TypeScript, ESLint and Jest pass. Every screen was driven in a browser at phone size: 14 checks without Supabase configured (route protection, validation, error states), and 16 checks for sign-in, sign-out, register, password reset and session persistence against a simulated Supabase Auth API. **Not yet tested against a real Supabase project or on a physical phone.**
 
+- **What AI did in M6:** wrote the map page builder (Leaflet + OpenStreetMap), the grouping of reports by location, the WebView and iframe map components, the Map tab with the selected-place panel, "Show my area" and the Places list, and 19 new unit tests. Choice of OpenStreetMap over Google Maps was made by me after AI explained the API-key and billing trade-off. Testing found and fixed: a cache key collision that would have crashed deleting a report, and a race on fast (cached) loads where the map missed its "ready" signal so it wouldn't zoom.
+- **How M6 was checked:** 260 unit tests, 35 database tests, TypeScript and ESLint pass. The Map tab was driven in a browser (22 checks, run twice including a cached run) with real Leaflet and real OpenStreetMap tiles: markers grouped correctly, pending and location-less reports excluded, no report text in the map page, marker tap → panel → report, list → zoom, "Show my area" with allowed and refused location, empty and error states. **Not yet tested inside the Android/iOS WebView on a real phone.**
 - **What AI did in M5:** wrote the reports and location services, report hooks, the report form (with phone/email blocking and the location picker), the Reports tab, report detail and edit screens, and 41 new unit tests. A unit test caught a bug in the location fallback (an error skipped the last-known position) before it reached the app. The scheme types, platform list and personal-details rules **should be reviewed by me** against real PNG reports.
 - **How M5 was checked:** 241 unit tests, 35 database tests, TypeScript and ESLint pass. The full report flow was driven in a browser (26 checks) against a simulated database that applies the same read rule as RLS, with a simulated GPS position: community vs. my reports, someone else's pending report hidden, validation, phone-number blocking, location added and rounded, create / edit (back to pending) / delete, location permission refused, and error-with-retry.
 - **What AI did in M4:** wrote the history service (paged list, get, delete), the TanStack Query hooks (infinite list, cache updates after delete), the History tab, the saved-check screen with re-run and delete, date formatting, and 24 new unit tests. Browser testing found and fixed two problems: history rows sized to their text (one ran off-screen), and a delete button that looked like a normal action; dark-mode button text was changed after a contrast check (2.8:1 → 7.1:1).
