@@ -11,13 +11,16 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 | **M0 — Project setup** | ✅ Done |
 | **M1 — Auth + navigation** | ✅ Done |
 | **M2 — Database** | ✅ Done |
-| M3 – M5 | Planned (see the project plan) |
+| **M3 — Risk checker** | ✅ Done (offline link analysis + scheme scorecard) |
+| M4 – M5 | Planned (see the project plan) |
 
 **M0 delivers:** project structure (`app/` + `src/`), theme, TanStack Query provider, Supabase client, environment-variable validation, shared UI states (loading / success / empty / error), visible disclaimer, `eas.json` build profiles, Jest + ESLint, and a temporary setup-status home screen that checks the Supabase connection. The auth flow and tabs replace that screen in M1.
 
 **M1 delivers:** login, register and forgot-password screens (react-hook-form + zod), password reset with an emailed code, protected routes (signed-out users only see auth screens; signed-in users only see the app), the five tabs (Check, Reports, Map, History, Profile — placeholders except Profile), sign-out, and friendly error messages that never reveal whether an email has an account.
 
 **M2 delivers:** the Supabase database — `profiles`, `checks`, `reports` and `evidence` tables with Row Level Security, a sign-up trigger that creates each user's profile, a private `evidence` Storage bucket, TypeScript types for every table, 35 database tests, and an editable display name on the Profile tab (read from the database).
+
+**M3 delivers:** the Check tab — offline link analysis with lookalike detection, a 10-question scheme scorecard, a result screen (risk level with icon + label + color, each indicator explained, what to do), and automatic saving of every check to the user's history. Google Safe Browsing, QR scanning and token lookup are separate milestones.
 
 ## Features (by priority)
 
@@ -112,6 +115,40 @@ Signed-out (anonymous) users can read nothing. **Moderators** approve or reject 
 
 `npm run test:db` runs the real migration in [PGlite](https://pglite.dev) (Postgres compiled to WebAssembly) on top of a small stand-in for Supabase's `auth` and `storage` schemas (`supabase/tests/supabase-stub.sql`). It then acts as different users and checks 35 rules: who can read, insert, update and delete each table, the sign-up trigger, the moderation rules, the storage folder rules, and that anonymous users see nothing. No Supabase project or Docker is needed.
 
+## How the risk check works
+
+Everything runs **on the phone** (`src/utils/risk/`). It is **rules-based, not machine learning**: each rule that matches adds a *risk indicator* with a weight, and the weights add up to a score from 0 to 100 (capped).
+
+| Score | Level shown |
+|---|---|
+| 0 | No known warnings found |
+| 1–24 | Few risk indicators |
+| 25–49 | Some risk indicators |
+| 50–100 | High risk indicators |
+
+**Link rules** (`url-analysis.ts`):
+
+| Indicator | Weight |
+|---|---|
+| `javascript:` / `data:` link instead of a web page | 60 |
+| Lookalike of a known brand (edit distance ≤ 1–2, or look-alike characters like `b1nance`, `rnetamask`) | 50 |
+| Brand name on a different ending (`binance.xyz`) | 45 |
+| Brand name used as a word in someone else's address (`binance-airdrop.com`) | 40 |
+| Hidden real address with `@` (`https://binance.com@evil.xyz`) | 35 |
+| IP number instead of a name | 30 |
+| Punycode / non-Latin characters (`xn--…`, Cyrillic look-alikes) | 30 |
+| Scam words (airdrop, claim, double, seed, validate…) | 10 each, max 25 |
+| `http://` instead of `https://` | 15 |
+| Link shortener (bit.ly…) | 15 |
+| Cheap / abused ending (.xyz, .top, .click…) | 10 |
+| Very long name, 3+ extra subdomains, 2+ hyphens, unusual port | 10 each |
+
+Known brands and their official domains are in `src/utils/risk/known-brands.ts`. **Check this list against each organisation's real website** — an entry that is wrong would make the real site look like a lookalike. An exact official domain shows the note "Matches X's official address" and adds no risk.
+
+**Scheme scorecard** (`scheme-scorecard.ts`): 10 yes/no questions. Each "yes" is an indicator. Asking for a recovery phrase, PIN or password (50) is high on its own; guaranteed returns, withdrawal fees and remote-access apps are 30 each.
+
+**Wording:** a unit test fails if any result text says "safe", "legit", "is a scam" or "not a scam".
+
 ## Builds (EAS)
 
 `eas.json` defines three profiles:
@@ -149,6 +186,7 @@ src/
   theme/                Colors, risk colors, spacing, typography
   types/                Database types (matches the migration)
   utils/                Pure helpers (env + form validation, error messages) + unit tests
+    risk/               Offline risk check: link rules, lookalikes, scheme scorecard, scoring
 supabase/
   migrations/           SQL to run in your Supabase project
   tests/                Database / RLS tests (npm run test:db)
@@ -188,6 +226,8 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 - **What AI did in M1:** wrote the auth service, session context, auth hooks, form schemas, the auth and tab screens, and the unit tests (48 in total). It also found and fixed two bugs during browser testing: opening the app signed out showed an "Unmatched Route" page, and the tab labels were clipped.
 - **How M1 was checked:** TypeScript, ESLint and Jest pass. Every screen was driven in a browser at phone size: 14 checks without Supabase configured (route protection, validation, error states), and 16 checks for sign-in, sign-out, register, password reset and session persistence against a simulated Supabase Auth API. **Not yet tested against a real Supabase project or on a physical phone.**
 
+- **What AI did in M3:** wrote the link analyser, lookalike detection (edit distance + look-alike characters), the scheme scorecard, the scoring and wording, the Check tab, the result screen and saving to history, plus 112 unit tests. The rules, weights, scam-word list and known-brand list were proposed by AI and **should be reviewed by me** against real PNG scam examples.
+- **How M3 was checked:** 176 unit tests pass, including realistic scam links, real sites that must *not* be flagged, and a wording test; deliberately disabling lookalike detection or adding the word "safe" made tests fail. The full flow was driven in a browser (25 checks): validation, high / medium / none results, example links, the scorecard, saving to history, a failed save with retry, and bad input.
 - **What AI did in M2:** designed and wrote the SQL migration (tables, constraints, triggers, RLS and storage policies), the database tests, the TypeScript database types, the profile service and the editable display name. Design decision made with AI: reports use "approved, or your own" for reading instead of only `user_id = auth.uid()`, so the community map can show other people's approved reports.
 - **How M2 was checked:** 35 database tests pass, and they were shown to catch a deliberately weakened security rule. 64 unit tests, TypeScript and ESLint pass. The Profile screen was driven in a browser (11 checks) against a simulated Supabase API, including the "database not set up" error and retry. **The migration has not yet been run on a real Supabase project.**
 
