@@ -16,7 +16,8 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 | **M5 — Community reports** | ✅ Done (create, read, update, delete, location) |
 | **M6 — Community map** | ✅ Done (OpenStreetMap, no API key) |
 | **M7 — Google Safe Browsing** | ✅ Done (Edge Function; key stays on the server) |
-| M8 + | Planned (see the project plan) |
+| **M8 — Offline cache** | ✅ Done (history, reports and map open offline; offline checks saved later) |
+| M9 + | Planned (see the project plan) |
 
 **M0 delivers:** project structure (`app/` + `src/`), theme, TanStack Query provider, Supabase client, environment-variable validation, shared UI states (loading / success / empty / error), visible disclaimer, `eas.json` build profiles, Jest + ESLint, and a temporary setup-status home screen that checks the Supabase connection. The auth flow and tabs replace that screen in M1.
 
@@ -46,6 +47,11 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 - **No verdicts:** Google's lists miss new scam sites, so "not listed" never lowers the score and is worded as "no known warnings".
 - **Terms:** the free v4 Lookup API is for non-commercial use, which suits this student project. A commercial launch would need Google's Web Risk API instead.
 - `javascript:` / `data:` links and scorecard checks are not sent to Google.
+
+**M8 delivers:** the offline cache (the last *Must* feature). History, saved checks, reports, the map list and the profile are saved on the phone (AsyncStorage) and open without a connection. An **offline banner** (icon + text) shows on every screen. Screens with nothing saved yet say so instead of looking empty. The **Check** tab works fully offline: a check made offline says it will be saved, and it is sent to History automatically when the connection returns, even after the app is closed and reopened. Other changes (creating, editing or deleting a report) fail straight away with "Could not connect" and a retry, instead of waiting. The Google Safe Browsing lookup is skipped offline and the result says only on-phone checks were used.
+
+- **Privacy:** each user's cache is stored under its own key and **deleted when they sign out**, so on a shared phone the next person can't see it. Saved data expires after 7 days. Google answers and the status check are never saved.
+- Connection state comes from `expo-network`, wired into TanStack Query's `onlineManager` (`src/services/offline-cache.ts`).
 
 **M6 delivers:** the Map tab. Approved reports with a location appear as markers (reports at the same rounded spot are grouped, with a count). Tapping a marker lists those reports; each opens its detail. **Show my area** centres the map on the user's approximate location (with permission handling). A **Places** list under the map gives the same information without the map, for screen readers.
 
@@ -283,6 +289,8 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 - **What AI did in M1:** wrote the auth service, session context, auth hooks, form schemas, the auth and tab screens, and the unit tests (48 in total). It also found and fixed two bugs during browser testing: opening the app signed out showed an "Unmatched Route" page, and the tab labels were clipped.
 - **How M1 was checked:** TypeScript, ESLint and Jest pass. Every screen was driven in a browser at phone size: 14 checks without Supabase configured (route protection, validation, error states), and 16 checks for sign-in, sign-out, register, password reset and session persistence against a simulated Supabase Auth API. **Not yet tested against a real Supabase project or on a physical phone.**
 
+- **What AI did in M8:** read the TanStack Query persistence and Expo SDK 58 `expo-network` docs, then wrote the per-user persisted cache, the online/offline wiring, the queued offline save of checks, the offline banner and "offline, nothing saved yet" state, and 14 new tests that use the real TanStack Query and persister (restore after restart, per-user separation, delete on sign-out, Google answers not saved, offline save resumed after a restart, other changes failing fast). Breaking the offline-save setting on purpose made a test fail.
+- **How M8 was checked:** 296 unit tests, 35 database tests, 12 function tests, TypeScript, ESLint and `expo-doctor` pass. **Not yet tested in a browser or on a phone** (airplane mode on and off). Jest sometimes prints a "worker failed to exit" warning in the full run; every test still passes.
 - **What AI did in M7:** read the current Google Safe Browsing and Supabase Edge Function docs, then wrote the `safe-browsing` Edge Function (input checks, the Google request, a reply that contains only "listed / not listed" and the threat types), the app service and hook, merging Google's answer into the score, the result-screen states, and 34 new tests (22 Jest, 12 Node). The weight of 60 for a Google listing was proposed by AI and **should be reviewed by me**. The wording test was changed to allow the product name "Safe Browsing" (the first version also flagged the function's name, `safe-browsing`).
 - **How M7 was checked:** 282 unit tests, 35 database tests, 12 function tests, TypeScript and ESLint pass. The real `supabase-js` client was run against a simulated Supabase to confirm how function errors arrive (404 not deployed, 502 from Google, no connection) and that the user's sign-in token is sent. **Not yet tested:** the deployed function with a real Google key, and the result screen in a browser or on a phone (the Chrome extension wasn't connected during this milestone).
 - **What AI did in M6:** wrote the map page builder (Leaflet + OpenStreetMap), the grouping of reports by location, the WebView and iframe map components, the Map tab with the selected-place panel, "Show my area" and the Places list, and 19 new unit tests. Choice of OpenStreetMap over Google Maps was made by me after AI explained the API-key and billing trade-off. Testing found and fixed: a cache key collision that would have crashed deleting a report, and a race on fast (cached) loads where the map missed its "ready" signal so it wouldn't zoom.
