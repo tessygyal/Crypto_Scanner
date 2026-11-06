@@ -10,6 +10,8 @@ import { RiskSummary } from '@/components/risk/risk-summary';
 import { SignalList } from '@/components/risk/signal-list';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
+import { AsyncState } from '@/components/async-state';
+import { useSafeBrowsing } from '@/hooks/use-safe-browsing';
 import { useSaveCheck } from '@/hooks/use-save-check';
 import { useTheme } from '@/hooks/use-theme';
 import { spacing } from '@/theme';
@@ -17,10 +19,11 @@ import { analyzeScheme, cleanSchemeAnswers } from '@/utils/risk/scheme-scorecard
 import { LEVEL_COPY } from '@/utils/risk/scoring';
 import type { RiskResult } from '@/utils/risk/types';
 import { analyzeUrl } from '@/utils/risk/url-analysis';
+import { safeBrowsingTarget, withSafeBrowsing } from '@/utils/safe-browsing';
 
 type Params = { type?: string; input?: string; answers?: string };
 
-/** Work out the result from the route params. All analysis runs on the phone. */
+/** Work out the offline result from the route params. This part runs on the phone. */
 function resultFromParams(params: Params): { result: RiskResult } | { error: string } {
   if (params.type === 'url') {
     const analysis = analyzeUrl(params.input ?? '');
@@ -37,16 +40,29 @@ export default function CheckResultScreen() {
   const params = useLocalSearchParams<Params>();
   const outcome = useMemo(() => resultFromParams(params), [params]);
 
-  if ('error' in outcome) {
+  // Links are also looked up in Google Safe Browsing (via our Edge Function).
+  const target = 'result' in outcome ? safeBrowsingTarget(outcome.result) : null;
+  const google = useSafeBrowsing(target);
+
+  const result = useMemo(() => {
+    if (!('result' in outcome)) return null;
+    if (target === null) return outcome.result;
+    if (google.isSuccess) return withSafeBrowsing(outcome.result, google.data);
+    if (google.isError) return withSafeBrowsing(outcome.result, { status: 'unavailable' });
+    return outcome.result;
+  }, [outcome, target, google.isSuccess, google.isError, google.data]);
+
+  if ('error' in outcome || !result) {
     return (
       <Screen hasHeader>
-        <FormMessage tone="error" message={outcome.error} />
+        <FormMessage tone="error" message={'error' in outcome ? outcome.error : 'Nothing to check.'} />
         <Button label="Back to Check" onPress={() => router.back()} />
       </Screen>
     );
   }
 
-  const { result } = outcome;
+  // Wait for Google before showing the level, so it doesn't change while being read.
+  const settled = target === null || google.isSuccess || google.isError;
   const indicators = result.signals.filter((s) => s.weight > 0);
 
   return (
@@ -60,32 +76,54 @@ export default function CheckResultScreen() {
         </ThemedText>
       </View>
 
-      <RiskSummary level={result.level} score={result.score} />
-
-      {result.signals.length > 0 && (
-        <View style={styles.section}>
-          <ThemedText variant="heading">
-            {indicators.length === 0
-              ? 'Notes'
-              : indicators.length === 1
-                ? '1 risk indicator'
-                : `${indicators.length} risk indicators`}
+      {target !== null && (
+        <AsyncState
+          isLoading={google.isPending}
+          error={google.error}
+          loadingMessage="Checking with Google Safe Browsing…"
+          onRetry={() => google.refetch()}
+          isRetrying={google.isFetching}>
+          <ThemedText variant="small" color="textSecondary">
+            Checked on your phone and with Google Safe Browsing.
           </ThemedText>
-          <SignalList signals={result.signals} />
-        </View>
+        </AsyncState>
+      )}
+      {google.isError && (
+        <ThemedText variant="small" color="textSecondary">
+          The result below uses only the checks on your phone.
+        </ThemedText>
       )}
 
-      <View style={styles.section}>
-        <ThemedText variant="heading">What to do</ThemedText>
-        {LEVEL_COPY[result.level].advice.map((tip) => (
-          <View key={tip} style={styles.tip}>
-            <ThemedText>•</ThemedText>
-            <ThemedText style={styles.tipText}>{tip}</ThemedText>
-          </View>
-        ))}
-      </View>
+      {settled && (
+        <>
+          <RiskSummary level={result.level} score={result.score} />
 
-      <SaveStatus result={result} />
+          {result.signals.length > 0 && (
+            <View style={styles.section}>
+              <ThemedText variant="heading">
+                {indicators.length === 0
+                  ? 'Notes'
+                  : indicators.length === 1
+                    ? '1 risk indicator'
+                    : `${indicators.length} risk indicators`}
+              </ThemedText>
+              <SignalList signals={result.signals} />
+            </View>
+          )}
+
+          <View style={styles.section}>
+            <ThemedText variant="heading">What to do</ThemedText>
+            {LEVEL_COPY[result.level].advice.map((tip) => (
+              <View key={tip} style={styles.tip}>
+                <ThemedText>•</ThemedText>
+                <ThemedText style={styles.tipText}>{tip}</ThemedText>
+              </View>
+            ))}
+          </View>
+
+          <SaveStatus result={result} />
+        </>
+      )}
 
       <Button label="Check something else" variant="secondary" onPress={() => router.back()} fullWidth />
 
@@ -94,7 +132,11 @@ export default function CheckResultScreen() {
   );
 }
 
-/** Saves the result to history once, and shows saving / saved / error-with-retry. */
+/**
+ * Saves the result to history once, and shows saving / saved / error-with-retry.
+ * Mounted only after Google Safe Browsing has answered (or failed), so the saved
+ * result includes it.
+ */
 function SaveStatus({ result }: { result: RiskResult }) {
   const theme = useTheme();
   const save = useSaveCheck();

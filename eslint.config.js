@@ -7,4 +7,9 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*', '.expo/*'],
   },
+  {
+    // Edge Functions run on Deno, which resolves `npm:` imports itself.
+    files: ['supabase/functions/**/*.ts'],
+    rules: { 'import/no-unresolved': ['error', { ignore: ['^npm:'] }] },
+  },
 ]);
