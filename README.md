@@ -8,10 +8,13 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 
 | Milestone | Status |
 |---|---|
-| **M0 — Project setup** | ✅ Done (see below) |
-| M1 – M5 | Planned (see the project plan) |
+| **M0 — Project setup** | ✅ Done |
+| **M1 — Auth + navigation** | ✅ Done |
+| M2 – M5 | Planned (see the project plan) |
 
 **M0 delivers:** project structure (`app/` + `src/`), theme, TanStack Query provider, Supabase client, environment-variable validation, shared UI states (loading / success / empty / error), visible disclaimer, `eas.json` build profiles, Jest + ESLint, and a temporary setup-status home screen that checks the Supabase connection. The auth flow and tabs replace that screen in M1.
+
+**M1 delivers:** login, register and forgot-password screens (react-hook-form + zod), password reset with an emailed code, protected routes (signed-out users only see auth screens; signed-in users only see the app), the five tabs (Check, Reports, Map, History, Profile — placeholders except Profile), sign-out, and friendly error messages that never reveal whether an email has an account.
 
 ## Features (by priority)
 
@@ -37,7 +40,23 @@ npm install
 2. Save the database password somewhere safe. It is **never** used in the app.
 3. Open **Project Settings → API Keys** and copy the **Project URL** and the **publishable** key.
 
-### 3. Configure environment variables
+### 3. Configure Supabase Auth
+
+In the Supabase dashboard:
+
+1. **Authentication → Emails → Reset Password** template: add the one-time code so users can type it into the app, for example:
+
+   ```html
+   <h2>Reset your password</h2>
+   <p>Your Scam Detector PNG reset code is: <strong>{{ .Token }}</strong></p>
+   <p>If you didn't ask for this, you can ignore this email.</p>
+   ```
+
+   The app uses this code instead of a reset link, so no deep-link setup is needed and it works in Expo Go.
+2. **Authentication → Sign In / Providers → Email:** keep *Confirm email* on for real use. While developing you can turn it off to sign in straight after registering.
+3. Supabase's built-in email sender is limited to a few emails per hour. That's fine for testing; set up custom SMTP before a demo with many users.
+
+### 4. Configure environment variables
 
 ```bash
 cp .env.example .env     # Windows PowerShell: Copy-Item .env.example .env
@@ -53,13 +72,13 @@ EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your publishable key>
 - `.env` is gitignored. Only `.env.example` (placeholders) is committed.
 - `EXPO_PUBLIC_*` values are bundled into the app, so they must be public. **Never** put the secret / service-role key or the database password in the app. Server-only secrets, such as the Google Safe Browsing API key, live in Supabase Edge Function secrets.
 
-### 4. Run
+### 5. Run
 
 ```bash
 npx expo start           # press a (Android), w (web), or scan the QR code with Expo Go
 ```
 
-The home screen shows **Setup status**. It should say *Connected to Supabase*. After changing `.env`, restart with `npx expo start --clear`.
+Register an account, then open the **Profile** tab: *App status* should say *Connected to Supabase*. After changing `.env`, restart with `npx expo start --clear`.
 
 ## Builds (EAS)
 
@@ -86,15 +105,17 @@ Client-side (`EXPO_PUBLIC_`) variables must use `plaintext` or `sensitive` visib
 
 ```
 app/                    Screens only (Expo Router file-based routes)
-  _layout.tsx           Root layout: providers + navigation
-  index.tsx             M0 setup-status screen (replaced in M1)
+  _layout.tsx           Root layout: providers + protected routes
+  index.tsx             Entry route: redirects to /check or /login
+  (auth)/               login, register, forgot-password (signed-out only)
+  (tabs)/               check, reports, map, history, profile (signed-in only)
 src/
   components/           Reusable UI (Screen, Button, Disclaimer, AsyncState, …)
-  context/              React context providers (TanStack Query, auth in M1)
+  context/              React context providers (TanStack Query, auth session)
   hooks/                Data hooks wrapping services with TanStack Query
-  services/             All network/API code (Supabase client, health check, …)
+  services/             All network/API code (Supabase client, auth, health check)
   theme/                Colors, risk colors, spacing, typography
-  utils/                Pure helpers (env validation, …) + unit tests
+  utils/                Pure helpers (env + form validation, auth error messages) + unit tests
 ```
 
 ### Architecture rules
@@ -126,5 +147,8 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 - **What AI did in M0:** scaffolded the project with `create-expo-app`, set up the folder structure, theme, Supabase client (following Expo's *Using Supabase* guide for SDK 58), TanStack Query provider, env validation, shared UI components, `eas.json`, the `.gitignore` fix (the template did not ignore `.env`) and the unit tests.
 - **How it was checked:** TypeScript, ESLint and Jest (6 tests) all pass. The app was run in a browser at phone size to confirm the "not configured" state, and an error state with retry was tested against an unreachable Supabase project.
 - **My responsibility:** I reviewed the generated code and can explain how it works. Design decisions, testing on a real device and the technical report are my own work.
+
+- **What AI did in M1:** wrote the auth service, session context, auth hooks, form schemas, the auth and tab screens, and the unit tests (48 in total). It also found and fixed two bugs during browser testing: opening the app signed out showed an "Unmatched Route" page, and the tab labels were clipped.
+- **How M1 was checked:** TypeScript, ESLint and Jest pass. Every screen was driven in a browser at phone size: 14 checks without Supabase configured (route protection, validation, error states), and 16 checks for sign-in, sign-out, register, password reset and session persistence against a simulated Supabase Auth API. **Not yet tested against a real Supabase project or on a physical phone.**
 
 *Update this section at each milestone with what AI helped with and what you did yourself.*
