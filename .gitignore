@@ -30,14 +30,18 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# local env files (secrets) — only .env.example is committed
+.env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
 
-example
 
 # generated native folders
 /ios
 /android
+
+# test coverage
+coverage/
