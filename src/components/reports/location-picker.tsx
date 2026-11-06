@@ -58,7 +58,10 @@ export function LocationPicker({
       )}
 
       {error && !value && (
-        <FormMessage tone="error" message={error instanceof LocationError ? error.message : "Couldn't get your location."} />
+        <FormMessage
+          tone="error"
+          message={`${error instanceof LocationError ? error.message : "Couldn't get your location."} You can still report without a location.`}
+        />
       )}
       {needsSettings && Platform.OS !== 'web' && (
         <Button label="Open Settings" variant="secondary" onPress={() => Linking.openSettings()} />
