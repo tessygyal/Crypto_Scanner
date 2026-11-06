@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { onlineManager, useQuery } from '@tanstack/react-query';
 
 import { lookupSafeBrowsing } from '@/services/safe-browsing';
 
@@ -13,6 +13,9 @@ export function useSafeBrowsing(url: string | null) {
     queryFn: () => lookupSafeBrowsing(url as string),
     enabled: url !== null,
     staleTime: 5 * 60 * 1000,
-    retry: 1,
+    // Offline, fail straight away so the result uses the on-phone checks,
+    // instead of pausing until the connection returns.
+    networkMode: 'always',
+    retry: (failureCount) => failureCount < 1 && onlineManager.isOnline(),
   });
 }

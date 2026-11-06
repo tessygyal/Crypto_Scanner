@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
 import { Disclaimer } from '@/components/disclaimer';
 import { FormMessage } from '@/components/form/form-message';
@@ -10,11 +11,11 @@ import { RiskSummary } from '@/components/risk/risk-summary';
 import { SignalList } from '@/components/risk/signal-list';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
-import { AsyncState } from '@/components/async-state';
 import { useSafeBrowsing } from '@/hooks/use-safe-browsing';
 import { useSaveCheck } from '@/hooks/use-save-check';
 import { useTheme } from '@/hooks/use-theme';
 import { spacing } from '@/theme';
+import { SAVE_QUEUED_MESSAGE } from '@/utils/offline';
 import { analyzeScheme, cleanSchemeAnswers } from '@/utils/risk/scheme-scorecard';
 import { LEVEL_COPY } from '@/utils/risk/scoring';
 import type { RiskResult } from '@/utils/risk/types';
@@ -148,6 +149,16 @@ function SaveStatus({ result }: { result: RiskResult }) {
     save.mutate(result);
   }, [save, result]);
 
+  if (save.isPaused) {
+    return (
+      <View style={styles.saveRow} accessibilityLiveRegion="polite">
+        <Ionicons name="cloud-offline-outline" size={18} color={theme.textSecondary} />
+        <ThemedText variant="small" color="textSecondary" style={styles.tipText}>
+          {SAVE_QUEUED_MESSAGE}
+        </ThemedText>
+      </View>
+    );
+  }
   if (save.isPending) {
     return (
       <View style={styles.saveRow} accessibilityLiveRegion="polite">

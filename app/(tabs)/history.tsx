@@ -5,10 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
 import { HistoryRow } from '@/components/history/history-row';
+import { OfflineBanner } from '@/components/offline-banner';
 import { ThemedText } from '@/components/themed-text';
 import { useCheckHistory } from '@/hooks/use-history';
 import { useTheme } from '@/hooks/use-theme';
 import { maxContentWidth, spacing } from '@/theme';
+import { isOfflineWithoutData } from '@/utils/offline';
 
 export default function HistoryScreen() {
   const theme = useTheme();
@@ -38,10 +40,12 @@ export default function HistoryScreen() {
         <View style={styles.header}>
           <ThemedText variant="title">History</ThemedText>
           <ThemedText color="textSecondary">Your past checks. Tap one to view, re-run or delete it.</ThemedText>
+          <OfflineBanner />
           {!history.isSuccess && (
             <AsyncState
               isLoading={history.isLoading}
               error={history.error}
+              isOffline={isOfflineWithoutData(history)}
               loadingMessage="Loading your history…"
               onRetry={() => history.refetch()}
               isRetrying={history.isFetching}>

@@ -18,6 +18,7 @@ import type { MapReport } from '@/services/reports';
 import { radius, spacing } from '@/theme';
 import { formatWhen } from '@/utils/history';
 import { groupByLocation, type MapPlace } from '@/utils/map';
+import { isOfflineWithoutData } from '@/utils/offline';
 import { PLATFORM_LABELS, SCHEME_LABELS } from '@/utils/reports';
 
 const MAP_HEIGHT = 380;
@@ -90,6 +91,7 @@ export default function MapScreen() {
       <AsyncState
         isLoading={false}
         error={reports.error}
+        isOffline={isOfflineWithoutData(reports)}
         isEmpty={reports.isSuccess && total === 0}
         emptyTitle="No reports on the map yet"
         emptyMessage="Approved reports that include a location will appear here."

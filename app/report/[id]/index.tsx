@@ -15,6 +15,7 @@ import { useTheme } from '@/hooks/use-theme';
 import type { Report } from '@/services/reports';
 import { radius, spacing } from '@/theme';
 import { formatDateTime } from '@/utils/history';
+import { isOfflineWithoutData } from '@/utils/offline';
 import { PLATFORM_LABELS, SCHEME_LABELS, STATUS_COPY } from '@/utils/reports';
 
 export default function ReportScreen() {
@@ -33,6 +34,7 @@ export default function ReportScreen() {
       <AsyncState
         isLoading={report.isLoading}
         error={report.error}
+        isOffline={isOfflineWithoutData(report)}
         isEmpty={report.isSuccess && !report.data}
         loadingMessage="Loading report…"
         emptyTitle="Report not found"

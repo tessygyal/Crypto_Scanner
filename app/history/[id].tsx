@@ -12,6 +12,7 @@ import { useCheck, useDeleteCheck } from '@/hooks/use-history';
 import { spacing } from '@/theme';
 import type { CheckRow } from '@/types/database';
 import { CHECK_TYPE_LABEL, formatDateTime, parseStoredSignals, rerunParams } from '@/utils/history';
+import { isOfflineWithoutData } from '@/utils/offline';
 
 /** A saved check exactly as it was recorded. Viewing does not create a new check. */
 export default function SavedCheckScreen() {
@@ -23,6 +24,7 @@ export default function SavedCheckScreen() {
       <AsyncState
         isLoading={check.isLoading}
         error={check.error}
+        isOffline={isOfflineWithoutData(check)}
         isEmpty={check.isSuccess && !check.data}
         loadingMessage="Loading check…"
         emptyTitle="Check not found"

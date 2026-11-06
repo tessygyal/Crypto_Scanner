@@ -18,6 +18,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { radius, riskColors, spacing } from '@/theme';
 import type { Profile } from '@/types/database';
 import { editProfileSchema, type EditProfileForm } from '@/utils/auth-validation';
+import { isOfflineWithoutData } from '@/utils/offline';
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -34,6 +35,7 @@ export default function ProfileScreen() {
         <AsyncState
           isLoading={profile.isLoading}
           error={profile.error}
+          isOffline={isOfflineWithoutData(profile)}
           isEmpty={profile.isSuccess && !profile.data}
           loadingMessage="Loading your profile…"
           emptyTitle="Profile not found"

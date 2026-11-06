@@ -14,14 +14,15 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const scheme = useColorScheme();
   return (
-    <QueryProvider>
-      <AuthProvider>
+    // AuthProvider is outside QueryProvider: the query cache is per signed-in user.
+    <AuthProvider>
+      <QueryProvider>
         <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
           <RootNavigator />
           <StatusBar style="auto" />
         </ThemeProvider>
-      </AuthProvider>
-    </QueryProvider>
+      </QueryProvider>
+    </AuthProvider>
   );
 }
 

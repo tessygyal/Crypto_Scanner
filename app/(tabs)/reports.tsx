@@ -6,12 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
 import { ChoiceChip } from '@/components/choice-chip';
+import { OfflineBanner } from '@/components/offline-banner';
 import { ReportRow } from '@/components/reports/report-row';
 import { ThemedText } from '@/components/themed-text';
 import { useReports } from '@/hooks/use-reports';
 import { useTheme } from '@/hooks/use-theme';
 import type { ReportScope } from '@/services/reports';
 import { maxContentWidth, spacing } from '@/theme';
+import { isOfflineWithoutData } from '@/utils/offline';
 
 const EMPTY: Record<ReportScope, { title: string; message: string }> = {
   community: {
@@ -63,10 +65,12 @@ export default function ReportsScreen() {
             <ChoiceChip label="My reports" selected={scope === 'mine'} onPress={() => setScope('mine')} />
           </View>
 
+          <OfflineBanner />
           {!reports.isSuccess && (
             <AsyncState
               isLoading={reports.isLoading}
               error={reports.error}
+              isOffline={isOfflineWithoutData(reports)}
               loadingMessage="Loading reports…"
               onRetry={() => reports.refetch()}
               isRetrying={reports.isFetching}>
