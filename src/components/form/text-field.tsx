@@ -24,6 +24,7 @@ type Props<T extends FieldValues> = {
   | 'onSubmitEditing'
   | 'maxLength'
   | 'editable'
+  | 'multiline'
 >;
 
 /** A labelled text input bound to react-hook-form, with its validation error underneath. */
@@ -57,7 +58,7 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
               accessibilityLabel={label}
               aria-labelledby={`${name}-label`}
               aria-invalid={!!error}
-              style={[styles.input, { color: theme.text }]}
+              style={[styles.input, inputProps.multiline && styles.multiline, { color: theme.text }]}
               {...inputProps}
             />
             {secure && (
@@ -104,6 +105,10 @@ const styles = StyleSheet.create({
     ...typography.body,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + spacing.xs,
+  },
+  multiline: {
+    minHeight: 140,
+    textAlignVertical: 'top',
   },
   toggle: {
     paddingHorizontal: spacing.md,

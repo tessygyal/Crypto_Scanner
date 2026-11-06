@@ -51,6 +51,18 @@ function RootNavigator() {
           name="history/[id]"
           options={{ headerShown: true, title: 'Saved check', headerBackButtonDisplayMode: 'minimal' }}
         />
+        <Stack.Screen
+          name="report/new"
+          options={{ headerShown: true, title: 'Report a scheme', headerBackButtonDisplayMode: 'minimal' }}
+        />
+        <Stack.Screen
+          name="report/[id]/index"
+          options={{ headerShown: true, title: 'Report', headerBackButtonDisplayMode: 'minimal' }}
+        />
+        <Stack.Screen
+          name="report/[id]/edit"
+          options={{ headerShown: true, title: 'Edit report', headerBackButtonDisplayMode: 'minimal' }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn} redirectTo="/check">
         <Stack.Screen name="(auth)" />

@@ -1,17 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
-import { FormMessage } from '@/components/form/form-message';
+import { ConfirmDelete } from '@/components/confirm-delete';
 import { RiskSummary } from '@/components/risk/risk-summary';
 import { SignalList } from '@/components/risk/signal-list';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useCheck, useDeleteCheck } from '@/hooks/use-history';
-import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
+import { spacing } from '@/theme';
 import type { CheckRow } from '@/types/database';
 import { CHECK_TYPE_LABEL, formatDateTime, parseStoredSignals, rerunParams } from '@/utils/history';
 
@@ -82,33 +80,17 @@ function SavedCheck({ check }: { check: CheckRow }) {
   );
 }
 
-/** Delete with an in-app confirmation step (works the same on phones and web). */
 function DeleteCheck({ id }: { id: string }) {
-  const theme = useTheme();
-  const [confirming, setConfirming] = useState(false);
   const remove = useDeleteCheck();
-
-  if (!confirming) {
-    return <Button label="Delete from history" variant="secondary" onPress={() => setConfirming(true)} fullWidth />;
-  }
-
   return (
-    <View style={[styles.confirm, { borderColor: theme.danger, backgroundColor: theme.surface }]} accessibilityRole="alert">
-      <ThemedText variant="bodyBold">Delete this check?</ThemedText>
-      <ThemedText variant="small" color="textSecondary">
-        It will be removed from your history. This can&apos;t be undone.
-      </ThemedText>
-      {remove.error && <FormMessage tone="error" message={remove.error.message} />}
-      <View style={styles.confirmButtons}>
-        <Button
-          label="Delete"
-          variant="danger"
-          onPress={() => remove.mutate(id, { onSuccess: () => router.back() })}
-          loading={remove.isPending}
-        />
-        <Button label="Cancel" variant="secondary" onPress={() => setConfirming(false)} disabled={remove.isPending} />
-      </View>
-    </View>
+    <ConfirmDelete
+      buttonLabel="Delete from history"
+      question="Delete this check?"
+      explanation="It will be removed from your history. This can't be undone."
+      onConfirm={() => remove.mutate(id, { onSuccess: () => router.back() })}
+      isPending={remove.isPending}
+      error={remove.error}
+    />
   );
 }
 
@@ -121,15 +103,5 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.md,
-  },
-  confirm: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  confirmButtons: {
-    flexDirection: 'row',
-    gap: spacing.sm,
   },
 });
