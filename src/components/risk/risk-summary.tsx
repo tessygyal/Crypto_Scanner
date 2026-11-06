@@ -1,19 +1,11 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { RiskIcon } from '@/components/risk/risk-icon';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { radius, riskColors, spacing } from '@/theme';
 import { LEVEL_COPY } from '@/utils/risk/scoring';
 import type { RiskLevel } from '@/utils/risk/types';
-
-const ICONS: Record<RiskLevel, ComponentProps<typeof Ionicons>['name']> = {
-  none: 'checkmark-circle',
-  low: 'information-circle',
-  medium: 'warning',
-  high: 'alert-circle',
-};
 
 /**
  * The headline of a result. The level is always shown as icon + text label +
@@ -30,7 +22,7 @@ export function RiskSummary({ level, score }: { level: RiskLevel; score: number 
       accessibilityRole="summary"
       accessibilityLabel={`${copy.label}. Risk score ${score} out of 100. ${copy.summary}`}>
       <View style={styles.header}>
-        <Ionicons name={ICONS[level]} size={32} color={color} />
+        <RiskIcon level={level} size={32} />
         <ThemedText variant="heading" style={styles.label}>
           {copy.label}
         </ThemedText>

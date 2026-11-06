@@ -14,6 +14,7 @@ export const palette = {
     primary: '#1c5cab',
     onPrimary: '#ffffff',
     danger: '#b42318',
+    onDanger: '#ffffff',
   },
   dark: {
     background: '#0d0d0d',
@@ -25,6 +26,7 @@ export const palette = {
     primary: '#5598e7',
     onPrimary: '#0b0b0b',
     danger: '#f97066',
+    onDanger: '#0b0b0b',
   },
 } as const;
 

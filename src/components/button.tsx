@@ -7,7 +7,7 @@ import { radius, spacing } from '@/theme';
 export type ButtonProps = {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'danger';
   loading?: boolean;
   disabled?: boolean;
   /** Stretch to the full width of the container (e.g. form submit buttons). */
@@ -16,7 +16,9 @@ export type ButtonProps = {
 
 export function Button({ label, onPress, variant = 'primary', loading, disabled, fullWidth }: ButtonProps) {
   const theme = useTheme();
-  const primary = variant === 'primary';
+  const filled = variant !== 'secondary';
+  const fill = variant === 'danger' ? theme.danger : theme.primary;
+  const textColor = variant === 'danger' ? theme.onDanger : filled ? theme.onPrimary : theme.text;
   const inactive = disabled || loading;
   return (
     <Pressable
@@ -26,14 +28,14 @@ export function Button({ label, onPress, variant = 'primary', loading, disabled,
       accessibilityState={{ disabled: inactive, busy: loading }}
       style={({ pressed }) => [
         styles.button,
-        primary
-          ? { backgroundColor: theme.primary }
+        filled
+          ? { backgroundColor: fill }
           : { backgroundColor: theme.surface, borderColor: theme.border, borderWidth: 1 },
         fullWidth && styles.fullWidth,
         (pressed || inactive) && styles.dimmed,
       ]}>
-      {loading && <ActivityIndicator color={primary ? theme.onPrimary : theme.text} />}
-      <ThemedText variant="bodyBold" style={{ color: primary ? theme.onPrimary : theme.text }}>
+      {loading && <ActivityIndicator color={textColor} />}
+      <ThemedText variant="bodyBold" style={{ color: textColor }}>
         {label}
       </ThemedText>
     </Pressable>

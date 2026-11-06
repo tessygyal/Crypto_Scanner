@@ -47,6 +47,10 @@ function RootNavigator() {
           name="check-result"
           options={{ headerShown: true, title: 'Check result', headerBackButtonDisplayMode: 'minimal' }}
         />
+        <Stack.Screen
+          name="history/[id]"
+          options={{ headerShown: true, title: 'Saved check', headerBackButtonDisplayMode: 'minimal' }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn} redirectTo="/check">
         <Stack.Screen name="(auth)" />

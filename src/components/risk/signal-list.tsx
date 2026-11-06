@@ -6,8 +6,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { radius, spacing } from '@/theme';
 import type { Signal } from '@/utils/risk/types';
 
-/** Each risk indicator with its plain-language explanation. */
-export function SignalList({ signals }: { signals: Signal[] }) {
+type ListedSignal = Pick<Signal, 'id' | 'title' | 'weight'> & { detail?: string };
+
+/** Each risk indicator with its plain-language explanation (if there is one). */
+export function SignalList({ signals }: { signals: ListedSignal[] }) {
   const theme = useTheme();
   const indicators = [...signals].sort((a, b) => b.weight - a.weight);
 
@@ -20,7 +22,7 @@ export function SignalList({ signals }: { signals: Signal[] }) {
             key={s.id}
             style={[styles.item, { backgroundColor: theme.surface, borderColor: theme.border }]}
             accessible
-            accessibilityLabel={`${isInfo ? 'Note' : 'Risk indicator'}: ${s.title}. ${s.detail}`}>
+            accessibilityLabel={`${isInfo ? 'Note' : 'Risk indicator'}: ${s.title}.${s.detail ? ` ${s.detail}` : ''}`}>
             <Ionicons
               name={isInfo ? 'information-circle-outline' : 'alert-circle-outline'}
               size={22}
@@ -38,9 +40,11 @@ export function SignalList({ signals }: { signals: Signal[] }) {
                   </ThemedText>
                 )}
               </View>
-              <ThemedText variant="small" color="textSecondary">
-                {s.detail}
-              </ThemedText>
+              {s.detail ? (
+                <ThemedText variant="small" color="textSecondary">
+                  {s.detail}
+                </ThemedText>
+              ) : null}
             </View>
           </View>
         );
