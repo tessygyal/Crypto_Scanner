@@ -5,6 +5,7 @@ import 'expo-sqlite/localStorage/install';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
+import type { Database } from '@/types/database';
 import { appEnv } from '@/utils/env';
 
 /** Thrown when a service needs Supabase but the app has no valid config. */
@@ -18,13 +19,15 @@ export class SupabaseNotConfiguredError extends Error {
   }
 }
 
+export type TypedSupabaseClient = SupabaseClient<Database>;
+
 /**
  * The Supabase client, or null until the app is configured. The app still
  * starts without config (so you can run it before creating a project);
  * services call `requireSupabase()` and surface the error state.
  */
-export const supabase: SupabaseClient | null = appEnv.ok
-  ? createClient(appEnv.env.supabaseUrl, appEnv.env.supabasePublishableKey, {
+export const supabase: TypedSupabaseClient | null = appEnv.ok
+  ? createClient<Database>(appEnv.env.supabaseUrl, appEnv.env.supabasePublishableKey, {
       auth: {
         storage: typeof localStorage === 'undefined' ? undefined : localStorage,
         autoRefreshToken: true,
@@ -35,7 +38,7 @@ export const supabase: SupabaseClient | null = appEnv.ok
     })
   : null;
 
-export function requireSupabase(): SupabaseClient {
+export function requireSupabase(): TypedSupabaseClient {
   if (!supabase) throw new SupabaseNotConfiguredError();
   return supabase;
 }
