@@ -44,7 +44,19 @@ export async function signUp(input: {
       options: { data: { display_name: input.displayName } },
     })
   );
+  // With "Confirm email" on, Supabase doesn't return an error for an email that
+  // is already registered: it returns a placeholder user with no identities
+  // (and sends no email). Turn that into a clear error.
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    throw new FriendlyAuthError({ code: 'email_already_registered' });
+  }
   return { needsEmailConfirmation: !data.session };
+}
+
+/** Send the sign-up confirmation email again. Supabase limits how often (see RESEND_COOLDOWN_SECONDS). */
+export async function resendConfirmation(email: string): Promise<void> {
+  const client = withConfig();
+  await run(() => client.auth.resend({ type: 'signup', email }));
 }
 
 /** Email a one-time code the user can enter in the app to set a new password. */

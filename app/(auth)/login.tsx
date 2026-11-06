@@ -7,11 +7,13 @@ import { Button } from '@/components/button';
 import { ConfigNotice } from '@/components/config-notice';
 import { Disclaimer } from '@/components/disclaimer';
 import { FormMessage } from '@/components/form/form-message';
+import { ResendConfirmation } from '@/components/form/resend-confirmation';
 import { TextField } from '@/components/form/text-field';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useSignIn } from '@/hooks/use-auth-actions';
 import { spacing } from '@/theme';
+import { FriendlyAuthError } from '@/utils/auth-errors';
 import { loginSchema, type LoginForm } from '@/utils/auth-validation';
 
 export default function LoginScreen() {
@@ -57,6 +59,9 @@ export default function LoginScreen() {
         />
 
         {signIn.error && <FormMessage tone="error" message={signIn.error.message} />}
+        {signIn.error instanceof FriendlyAuthError && signIn.error.code === 'email_not_confirmed' && signIn.variables && (
+          <ResendConfirmation email={signIn.variables.email} />
+        )}
 
         <Button label="Sign in" onPress={onSubmit} loading={signIn.isPending} fullWidth />
 
