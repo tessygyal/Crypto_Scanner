@@ -5,8 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/use-theme';
 import { maxContentWidth, spacing } from '@/theme';
 
-/** Scrollable, safe-area-aware page with a readable max width. */
-export function Screen({ children }: { children: ReactNode }) {
+/**
+ * Scrollable, safe-area-aware page with a readable max width.
+ * Set `hasHeader` when a navigation header already covers the status bar.
+ */
+export function Screen({ children, hasHeader }: { children: ReactNode; hasHeader?: boolean }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   return (
@@ -15,7 +18,7 @@ export function Screen({ children }: { children: ReactNode }) {
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.xl },
+        { paddingTop: (hasHeader ? 0 : insets.top) + spacing.lg, paddingBottom: insets.bottom + spacing.xl },
       ]}>
       <View style={styles.inner}>{children}</View>
     </ScrollView>

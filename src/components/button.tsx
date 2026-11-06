@@ -10,9 +10,11 @@ export type ButtonProps = {
   variant?: 'primary' | 'secondary';
   loading?: boolean;
   disabled?: boolean;
+  /** Stretch to the full width of the container (e.g. form submit buttons). */
+  fullWidth?: boolean;
 };
 
-export function Button({ label, onPress, variant = 'primary', loading, disabled }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', loading, disabled, fullWidth }: ButtonProps) {
   const theme = useTheme();
   const primary = variant === 'primary';
   const inactive = disabled || loading;
@@ -27,6 +29,7 @@ export function Button({ label, onPress, variant = 'primary', loading, disabled 
         primary
           ? { backgroundColor: theme.primary }
           : { backgroundColor: theme.surface, borderColor: theme.border, borderWidth: 1 },
+        fullWidth && styles.fullWidth,
         (pressed || inactive) && styles.dimmed,
       ]}>
       {loading && <ActivityIndicator color={primary ? theme.onPrimary : theme.text} />}
@@ -47,6 +50,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     alignSelf: 'flex-start',
+  },
+  fullWidth: {
+    alignSelf: 'stretch',
   },
   dimmed: {
     opacity: 0.6,
