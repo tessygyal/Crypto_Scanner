@@ -21,7 +21,7 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 
 **M0 delivers:** project structure (`app/` + `src/`), theme, TanStack Query provider, Supabase client, environment-variable validation, shared UI states (loading / success / empty / error), visible disclaimer, `eas.json` build profiles, Jest + ESLint, and a temporary setup-status home screen that checks the Supabase connection. The auth flow and tabs replace that screen in M1.
 
-**M1 delivers:** login, register and forgot-password screens (react-hook-form + zod), password reset with an emailed code, protected routes (signed-out users only see auth screens; signed-in users only see the app), the five tabs (Check, Reports, Map, History, Profile — placeholders except Profile), sign-out, and friendly error messages that never reveal whether an email has an account.
+**M1 delivers:** login, register and forgot-password screens (react-hook-form + zod), password reset with an emailed code, protected routes (signed-out users only see auth screens; signed-in users only see the app), the five tabs (Check, Reports, Map, History, Profile — placeholders except Profile), sign-out, and friendly error messages. *(Changed after M8: sign-up now says when an email is already registered, and there is a "Resend confirmation email" button. See [Sign-up emails](#sign-up-emails).)*
 
 **M2 delivers:** the Supabase database — `profiles`, `checks`, `reports` and `evidence` tables with Row Level Security, a sign-up trigger that creates each user's profile, a private `evidence` Storage bucket, TypeScript types for every table, 35 database tests, and an editable display name on the Profile tab (read from the database).
 
@@ -102,6 +102,16 @@ In the Supabase dashboard:
    The app uses this code instead of a reset link, so no deep-link setup is needed and it works in Expo Go.
 2. **Authentication → Sign In / Providers → Email:** keep *Confirm email* on for real use. While developing you can turn it off to sign in straight after registering.
 3. Supabase's built-in email sender is limited to a few emails per hour. That's fine for testing; set up custom SMTP before a demo with many users.
+
+### Sign-up emails
+
+- **Already registered:** sign-up says "An account with this email already exists" instead of a vague error. This was a deliberate choice: people were left waiting for an email that Supabase never sends for an existing account. The trade-off is that someone could use the form to test whether an email has an account. Sign-in and password reset still don't reveal it.
+- **Resend:** after registering, and on the sign-in screen when an email isn't confirmed yet, a **Resend confirmation email** button counts down before it can be used again.
+- **Limits are set by Supabase, not the app.** With the built-in email sender, Supabase sends at most **2 emails per hour for the whole project**, and waits **60 seconds** between emails to the same address. To resend faster:
+  1. Set up your own email sender: **Authentication → Emails → SMTP Settings** (e.g. Resend, Brevo or SendGrid; most have a free plan).
+  2. Lower the per-user wait under **Authentication → Rate Limits**.
+  3. Set `RESEND_COOLDOWN_SECONDS` in `src/utils/auth-errors.ts` to the same number, so the button's countdown matches.
+- **Confirmation link:** set **Authentication → URL Configuration → Site URL** to where the app runs (e.g. `http://localhost:8081` while developing). Otherwise the link opens `localhost:3000` and shows "can't be reached", although the email is already confirmed by then.
 
 ### 4. Create the database
 
