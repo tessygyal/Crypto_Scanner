@@ -12,7 +12,8 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 | **M1 — Auth + navigation** | ✅ Done |
 | **M2 — Database** | ✅ Done |
 | **M3 — Risk checker** | ✅ Done (offline link analysis + scheme scorecard) |
-| M4 – M5 | Planned (see the project plan) |
+| **M4 — Check history** | ✅ Done (view, re-run, delete) |
+| M5 + | Planned (see the project plan) |
 
 **M0 delivers:** project structure (`app/` + `src/`), theme, TanStack Query provider, Supabase client, environment-variable validation, shared UI states (loading / success / empty / error), visible disclaimer, `eas.json` build profiles, Jest + ESLint, and a temporary setup-status home screen that checks the Supabase connection. The auth flow and tabs replace that screen in M1.
 
@@ -21,6 +22,8 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 **M2 delivers:** the Supabase database — `profiles`, `checks`, `reports` and `evidence` tables with Row Level Security, a sign-up trigger that creates each user's profile, a private `evidence` Storage bucket, TypeScript types for every table, 35 database tests, and an editable display name on the Profile tab (read from the database).
 
 **M3 delivers:** the Check tab — offline link analysis with lookalike detection, a 10-question scheme scorecard, a result screen (risk level with icon + label + color, each indicator explained, what to do), and automatic saving of every check to the user's history. Google Safe Browsing, QR scanning and token lookup are separate milestones.
+
+**M4 delivers:** the History tab — past checks newest first, 20 at a time with infinite scroll and pull-to-refresh; a saved-check screen showing the result exactly as recorded (viewing never creates a new check); **re-run** with the current rules (offer checks re-run from the saved answers); and **delete** with an in-app confirmation. Loading, empty, error-with-retry and "not found" states are all handled. History currently needs a connection; the offline cache is a later milestone.
 
 ## Features (by priority)
 
@@ -226,6 +229,8 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 - **What AI did in M1:** wrote the auth service, session context, auth hooks, form schemas, the auth and tab screens, and the unit tests (48 in total). It also found and fixed two bugs during browser testing: opening the app signed out showed an "Unmatched Route" page, and the tab labels were clipped.
 - **How M1 was checked:** TypeScript, ESLint and Jest pass. Every screen was driven in a browser at phone size: 14 checks without Supabase configured (route protection, validation, error states), and 16 checks for sign-in, sign-out, register, password reset and session persistence against a simulated Supabase Auth API. **Not yet tested against a real Supabase project or on a physical phone.**
 
+- **What AI did in M4:** wrote the history service (paged list, get, delete), the TanStack Query hooks (infinite list, cache updates after delete), the History tab, the saved-check screen with re-run and delete, date formatting, and 24 new unit tests. Browser testing found and fixed two problems: history rows sized to their text (one ran off-screen), and a delete button that looked like a normal action; dark-mode button text was changed after a contrast check (2.8:1 → 7.1:1).
+- **How M4 was checked:** 200 unit tests, TypeScript and ESLint pass. The History flow was driven in a browser (27 checks) against a simulated database of 25 saved checks: paging, view without saving, re-run of a link and of a scorecard, delete with cancel/confirm, not-found, empty and error-with-retry states.
 - **What AI did in M3:** wrote the link analyser, lookalike detection (edit distance + look-alike characters), the scheme scorecard, the scoring and wording, the Check tab, the result screen and saving to history, plus 112 unit tests. The rules, weights, scam-word list and known-brand list were proposed by AI and **should be reviewed by me** against real PNG scam examples.
 - **How M3 was checked:** 176 unit tests pass, including realistic scam links, real sites that must *not* be flagged, and a wording test; deliberately disabling lookalike detection or adding the word "safe" made tests fail. The full flow was driven in a browser (25 checks): validation, high / medium / none results, example links, the scorecard, saving to history, a failed save with retry, and bad input.
 - **What AI did in M2:** designed and wrote the SQL migration (tables, constraints, triggers, RLS and storage policies), the database tests, the TypeScript database types, the profile service and the editable display name. Design decision made with AI: reports use "approved, or your own" for reading instead of only `user_id = auth.uid()`, so the community map can show other people's approved reports.
