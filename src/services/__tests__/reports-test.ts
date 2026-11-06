@@ -1,4 +1,13 @@
-import { createReport, deleteReport, getReport, listReports, REPORTS_PAGE_SIZE, updateReport } from '../reports';
+import {
+  createReport,
+  deleteReport,
+  getReport,
+  listMapReports,
+  listReports,
+  MAP_LIMIT,
+  REPORTS_PAGE_SIZE,
+  updateReport,
+} from '../reports';
 
 let mockResult: { data: unknown; error: unknown } | Error = { data: null, error: null };
 const mockCalls: [string, unknown[]][] = [];
@@ -11,7 +20,7 @@ jest.mock('../supabase', () => ({
       const builder: Record<string, unknown> = {
         then: (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) => settle().then(resolve, reject),
       };
-      for (const m of ['insert', 'update', 'delete', 'select', 'order', 'range', 'eq']) {
+      for (const m of ['insert', 'update', 'delete', 'select', 'order', 'range', 'eq', 'not', 'limit']) {
         builder[m] = (...args: unknown[]) => (mockCalls.push([m, args]), builder);
       }
       for (const m of ['single', 'maybeSingle']) builder[m] = () => (mockCalls.push([m, []]), settle());
@@ -125,5 +134,25 @@ describe('updateReport / deleteReport', () => {
     mockResult = { data: [{ id: 'r1' }], error: null };
     await expect(deleteReport('r1')).resolves.toBeUndefined();
     expect(mockCalls.map((c) => c[0])).toEqual(['from', 'delete', 'eq', 'select']);
+  });
+});
+
+describe('listMapReports', () => {
+  it('asks for approved reports with a location, newest first, capped', async () => {
+    mockResult = {
+      data: [
+        { id: 'a', latitude: -9.44, longitude: 147.18 },
+        { id: 'b', latitude: null, longitude: null },
+      ],
+      error: null,
+    };
+    await expect(listMapReports()).resolves.toEqual([{ id: 'a', latitude: -9.44, longitude: 147.18 }]);
+    expect(mockCalls).toContainEqual(['eq', ['status', 'approved']]);
+    expect(mockCalls).toContainEqual(['not', ['latitude', 'is', null]]);
+    expect(mockCalls).toContainEqual(['order', ['created_at', { ascending: false }]]);
+    expect(mockCalls).toContainEqual(['limit', [MAP_LIMIT]]);
+    const select = mockCalls.find((c) => c[0] === 'select')?.[1][0] as string;
+    expect(select).not.toContain('description');
+    expect(select).not.toContain('user_id');
   });
 });

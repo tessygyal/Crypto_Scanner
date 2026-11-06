@@ -74,3 +74,25 @@ export async function deleteReport(id: string): Promise<void> {
   const rows = await run(db().from('reports').delete().eq('id', id).select('id'));
   if (rows.length === 0) throw new FriendlyDbError({ code: '23503', message: 'report not found' });
 }
+
+/** The most map markers we load at once (newest first). */
+export const MAP_LIMIT = 500;
+
+export type MapReport = Pick<ReportRow, 'id' | 'scheme_type' | 'platform' | 'created_at'> & {
+  latitude: number;
+  longitude: number;
+};
+
+/** Approved reports that have a location, for the community map. */
+export async function listMapReports(): Promise<MapReport[]> {
+  const rows = await run(
+    db()
+      .from('reports')
+      .select('id, scheme_type, platform, latitude, longitude, created_at')
+      .eq('status', 'approved')
+      .not('latitude', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(MAP_LIMIT)
+  );
+  return rows.filter((r): r is MapReport => r.latitude !== null && r.longitude !== null);
+}

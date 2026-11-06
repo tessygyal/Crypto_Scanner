@@ -24,7 +24,7 @@ const TIMEOUT_MS = 15_000;
  */
 export async function getApproximateLocation(): Promise<Coordinates> {
   if (!(await Location.hasServicesEnabledAsync().catch(() => true))) {
-    throw new LocationError('Location is turned off on this device. Turn it on, or report without a location.');
+    throw new LocationError('Location is turned off on this device. Turn it on and try again.');
   }
 
   let permission = await Location.getForegroundPermissionsAsync();
@@ -33,9 +33,9 @@ export async function getApproximateLocation(): Promise<Coordinates> {
   }
   if (!permission.granted) {
     throw permission.canAskAgain
-      ? new LocationError('Location permission was not given. You can still report without a location.')
+      ? new LocationError('Location permission was not given.')
       : new LocationError(
-          'Location is blocked for this app. Allow it in your phone Settings, or report without a location.',
+          'Location is blocked for this app. You can allow it in your phone Settings.',
           true
         );
   }
@@ -52,7 +52,7 @@ export async function getApproximateLocation(): Promise<Coordinates> {
   clearTimeout(timer);
   position ??= await Location.getLastKnownPositionAsync().catch(() => null);
   if (!position) {
-    throw new LocationError("Couldn't find your location. Try again outside, or report without a location.");
+    throw new LocationError("Couldn't find your location. Try again outside or near a window.");
   }
 
   return {

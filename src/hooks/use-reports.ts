@@ -5,6 +5,7 @@ import {
   createReport,
   deleteReport,
   getReport,
+  listMapReports,
   listReports,
   updateReport,
   type Report,
@@ -17,7 +18,15 @@ export const reportsKeys = {
   all: ['reports'] as const,
   list: (scope: ReportScope, userId: string | undefined) => ['reports', 'list', scope, userId] as const,
   detail: (id: string) => ['reports', 'detail', id] as const,
+  // Under 'list' so creating, editing or deleting a report also refreshes the map.
+  map: ['reports', 'list', 'map'] as const,
 };
+
+/** Approved reports with a location, for the map. */
+export function useMapReports() {
+  const { user } = useAuth();
+  return useQuery({ queryKey: reportsKeys.map, queryFn: listMapReports, enabled: !!user });
+}
 
 export function useReports(scope: ReportScope) {
   const { user } = useAuth();
@@ -78,8 +87,10 @@ export function useDeleteReport() {
   return useMutation({
     mutationFn: deleteReport,
     onSuccess: (_void, id) => {
+      // Remove it from every cached paged list straight away. (The map's cache
+      // lives under the same prefix but is a plain array, so leave it to the refetch.)
       queryClient.setQueriesData<InfiniteData<ReportPage>>({ queryKey: ['reports', 'list'] }, (data) =>
-        data
+        data && 'pages' in data
           ? { ...data, pages: data.pages.map((p) => ({ ...p, reports: p.reports.filter((r: Report) => r.id !== id) })) }
           : data
       );
