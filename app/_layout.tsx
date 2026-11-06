@@ -43,6 +43,10 @@ function RootNavigator() {
           redirectTo names a real screen (a bare group like "/(auth)" has no page). */}
       <Stack.Protected guard={isSignedIn} redirectTo="/login">
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="check-result"
+          options={{ headerShown: true, title: 'Check result', headerBackButtonDisplayMode: 'minimal' }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn} redirectTo="/check">
         <Stack.Screen name="(auth)" />
