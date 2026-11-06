@@ -25,7 +25,7 @@ Run lint and typecheck before declaring any task done.
 
 ## Navigation & Routing
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
+- Use **Expo Router** for all navigation. Routes live in the root `app/` folder — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, services, utils) in `src/`.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
 
@@ -39,3 +39,15 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Project rules (Scam Detector PNG — IS323)
+
+- **Structure:** `app/` = screens only. `src/services` = all network/Supabase code. `src/hooks` = TanStack Query hooks wrapping services. `src/context`, `src/components`, `src/theme`, `src/utils` for the rest.
+- **No `fetch` or Supabase calls inside components or screens.** Screens use hooks; hooks call services.
+- **Every API call handles loading, success, empty and error (with retry)** — use `src/components/async-state.tsx`.
+- **Wording:** say "risk indicators" or "no known warnings found". Never "safe", "legit", "this is a scam" or similar verdicts. Risk colors always come with a text label.
+- **Reports** describe schemes and platforms, never named individuals.
+- **Secrets:** only `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` may be in the app. Never the service-role/secret key or DB password. Server-side keys (Google Safe Browsing) go in Supabase Edge Function secrets. `.env` is gitignored; keep `.env.example` in sync.
+- **Database:** Row Level Security on every user-owned table with `user_id = auth.uid()`.
+- **Priorities:** finish Must features (auth, URL analysis, one external API, report CRUD, map, history, offline cache) before Should/Could ones. Work one milestone at a time on a `feature/…` branch.
+- Run `npm test`, `npx tsc --noEmit` and `npx eslint .` before declaring a task done.
