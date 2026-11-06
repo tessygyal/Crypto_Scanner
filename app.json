@@ -33,7 +33,13 @@
           "imageWidth": 76
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Scam Detector PNG uses your approximate location (rounded to about 1 km) to place your scam report on the community map. You can report without sharing your location."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
