@@ -41,6 +41,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "@types/react": "~19.3.0",
     "typescript": "~6.0.3"
   },
@@ -52,10 +53,15 @@
     "lint": "expo lint",
     "test": "jest",
     "test:watch": "jest --watchAll",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:db": "node --test supabase/tests/rls.test.mjs"
   },
   "private": true,
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/supabase/"
+    ]
   }
 }
