@@ -10,11 +10,14 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 |---|---|
 | **M0 — Project setup** | ✅ Done |
 | **M1 — Auth + navigation** | ✅ Done |
-| M2 – M5 | Planned (see the project plan) |
+| **M2 — Database** | ✅ Done |
+| M3 – M5 | Planned (see the project plan) |
 
 **M0 delivers:** project structure (`app/` + `src/`), theme, TanStack Query provider, Supabase client, environment-variable validation, shared UI states (loading / success / empty / error), visible disclaimer, `eas.json` build profiles, Jest + ESLint, and a temporary setup-status home screen that checks the Supabase connection. The auth flow and tabs replace that screen in M1.
 
 **M1 delivers:** login, register and forgot-password screens (react-hook-form + zod), password reset with an emailed code, protected routes (signed-out users only see auth screens; signed-in users only see the app), the five tabs (Check, Reports, Map, History, Profile — placeholders except Profile), sign-out, and friendly error messages that never reveal whether an email has an account.
+
+**M2 delivers:** the Supabase database — `profiles`, `checks`, `reports` and `evidence` tables with Row Level Security, a sign-up trigger that creates each user's profile, a private `evidence` Storage bucket, TypeScript types for every table, 35 database tests, and an editable display name on the Profile tab (read from the database).
 
 ## Features (by priority)
 
@@ -56,7 +59,14 @@ In the Supabase dashboard:
 2. **Authentication → Sign In / Providers → Email:** keep *Confirm email* on for real use. While developing you can turn it off to sign in straight after registering.
 3. Supabase's built-in email sender is limited to a few emails per hour. That's fine for testing; set up custom SMTP before a demo with many users.
 
-### 4. Configure environment variables
+### 4. Create the database
+
+Open **SQL Editor** in the Supabase dashboard, paste the contents of
+[`supabase/migrations/20261106000000_initial_schema.sql`](supabase/migrations/20261106000000_initial_schema.sql) and click **Run**. This creates the tables, security rules and the `evidence` storage bucket. Run it once; running it again fails because the tables already exist.
+
+Users who signed up **before** you ran the migration have no profile row. Delete those test users (Authentication → Users) and sign up again.
+
+### 5. Configure environment variables
 
 ```bash
 cp .env.example .env     # Windows PowerShell: Copy-Item .env.example .env
@@ -72,13 +82,35 @@ EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your publishable key>
 - `.env` is gitignored. Only `.env.example` (placeholders) is committed.
 - `EXPO_PUBLIC_*` values are bundled into the app, so they must be public. **Never** put the secret / service-role key or the database password in the app. Server-only secrets, such as the Google Safe Browsing API key, live in Supabase Edge Function secrets.
 
-### 5. Run
+### 6. Run
 
 ```bash
 npx expo start           # press a (Android), w (web), or scan the QR code with Expo Go
 ```
 
 Register an account, then open the **Profile** tab: *App status* should say *Connected to Supabase*. After changing `.env`, restart with `npx expo start --clear`.
+
+## Database
+
+```
+profiles 1 ── * checks          (a user's check history)
+profiles 1 ── * reports 1 ── * evidence   (community reports and their screenshots)
+auth.users 1 ── 1 profiles      (created automatically on sign-up)
+```
+
+| Table | Who can read | Who can write |
+|---|---|---|
+| `profiles` | Any signed-in user (display name only, no email) | Owner (display name only) |
+| `checks` | Owner | Owner (insert / delete; no edits) |
+| `reports` | Everyone signed in: **approved** reports. Owner: own reports in any status | Owner. New reports are always `pending`; editing an approved report sends it back to `pending`; users can never change `status` |
+| `evidence` | Owner | Owner, only for their own reports and their own Storage folder |
+| Storage `evidence` bucket | Owner (files in `<user id>/…`) | Owner; private, images only, max 5 MB |
+
+Signed-out (anonymous) users can read nothing. **Moderators** approve or reject reports in the Supabase dashboard (Table Editor → `reports` → `status`), which bypasses RLS.
+
+### Database tests
+
+`npm run test:db` runs the real migration in [PGlite](https://pglite.dev) (Postgres compiled to WebAssembly) on top of a small stand-in for Supabase's `auth` and `storage` schemas (`supabase/tests/supabase-stub.sql`). It then acts as different users and checks 35 rules: who can read, insert, update and delete each table, the sign-up trigger, the moderation rules, the storage folder rules, and that anonymous users see nothing. No Supabase project or Docker is needed.
 
 ## Builds (EAS)
 
@@ -115,7 +147,11 @@ src/
   hooks/                Data hooks wrapping services with TanStack Query
   services/             All network/API code (Supabase client, auth, health check)
   theme/                Colors, risk colors, spacing, typography
-  utils/                Pure helpers (env + form validation, auth error messages) + unit tests
+  types/                Database types (matches the migration)
+  utils/                Pure helpers (env + form validation, error messages) + unit tests
+supabase/
+  migrations/           SQL to run in your Supabase project
+  tests/                Database / RLS tests (npm run test:db)
 ```
 
 ### Architecture rules
@@ -132,6 +168,7 @@ src/
 |---|---|
 | `npm start` | Start the Expo dev server |
 | `npm test` | Run unit tests (Jest) |
+| `npm run test:db` | Run database / Row Level Security tests (PGlite) |
 | `npm run typecheck` | TypeScript check |
 | `npx eslint .` | Lint |
 
@@ -150,5 +187,8 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 
 - **What AI did in M1:** wrote the auth service, session context, auth hooks, form schemas, the auth and tab screens, and the unit tests (48 in total). It also found and fixed two bugs during browser testing: opening the app signed out showed an "Unmatched Route" page, and the tab labels were clipped.
 - **How M1 was checked:** TypeScript, ESLint and Jest pass. Every screen was driven in a browser at phone size: 14 checks without Supabase configured (route protection, validation, error states), and 16 checks for sign-in, sign-out, register, password reset and session persistence against a simulated Supabase Auth API. **Not yet tested against a real Supabase project or on a physical phone.**
+
+- **What AI did in M2:** designed and wrote the SQL migration (tables, constraints, triggers, RLS and storage policies), the database tests, the TypeScript database types, the profile service and the editable display name. Design decision made with AI: reports use "approved, or your own" for reading instead of only `user_id = auth.uid()`, so the community map can show other people's approved reports.
+- **How M2 was checked:** 35 database tests pass, and they were shown to catch a deliberately weakened security rule. 64 unit tests, TypeScript and ESLint pass. The Profile screen was driven in a browser (11 checks) against a simulated Supabase API, including the "database not set up" error and retry. **The migration has not yet been run on a real Supabase project.**
 
 *Update this section at each milestone with what AI helped with and what you did yourself.*

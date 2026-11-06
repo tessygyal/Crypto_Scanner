@@ -50,4 +50,5 @@ Docs: https://docs.expo.dev/eas/index.md
 - **Secrets:** only `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` may be in the app. Never the service-role/secret key or DB password. Server-side keys (Google Safe Browsing) go in Supabase Edge Function secrets. `.env` is gitignored; keep `.env.example` in sync.
 - **Database:** Row Level Security on every user-owned table with `user_id = auth.uid()`.
 - **Priorities:** finish Must features (auth, URL analysis, one external API, report CRUD, map, history, offline cache) before Should/Could ones. Work one milestone at a time on a `feature/…` branch.
-- Run `npm test`, `npx tsc --noEmit` and `npx eslint .` before declaring a task done.
+- **Schema changes:** add a new file in `supabase/migrations/` (never edit an applied one), update `src/types/database.ts`, and add RLS tests to `supabase/tests/rls.test.mjs`.
+- Run `npm test`, `npm run test:db`, `npx tsc --noEmit` and `npx eslint .` before declaring a task done.
