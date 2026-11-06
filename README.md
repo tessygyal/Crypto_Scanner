@@ -71,7 +71,7 @@ The map is [Leaflet](https://leafletjs.com) with [OpenStreetMap](https://www.ope
 
 ## Tech stack
 
-Expo SDK 58 · Expo Router · TypeScript · Supabase (Auth, Postgres with Row Level Security, Storage) · TanStack Query · react-hook-form + zod · AsyncStorage · EAS Build.
+Expo SDK 58 · Expo Router · TypeScript · NativeWind 4 (Tailwind CSS 3) · Supabase (Auth, Postgres with Row Level Security, Storage) · TanStack Query · react-hook-form + zod · AsyncStorage · EAS Build.
 
 ## Getting started
 
@@ -271,6 +271,7 @@ supabase/
 - **Wording:** results say "risk indicators" or "no known warnings found", never "safe" or "this is a scam". Risk colors are always shown with a text label.
 - **Reports** describe schemes and platforms, never named individuals.
 - **Row Level Security:** every user-owned table restricts rows to `user_id = auth.uid()`.
+- **Styling:** use NativeWind `className`s, not `StyleSheet`. The colors (`bg-surface`, `text-primary`, `border-danger`…), spacing (`gap-md`, `p-lg`), radius (`rounded-md`) and text sizes (`text-heading`, `text-small-bold`) come from `src/theme`, so light and dark mode switch automatically. Keep `style` only for values known at runtime (safe-area insets, a score's width, a risk level's color), and `useTheme()` only for props that need a raw color (icons, `ActivityIndicator`, navigator options). Write full class names (`cn(isOn && 'bg-primary')`), never build them from strings, or Tailwind won't find them.
 
 ## Scripts
 
@@ -299,6 +300,7 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 - **What AI did in M1:** wrote the auth service, session context, auth hooks, form schemas, the auth and tab screens, and the unit tests (48 in total). It also found and fixed two bugs during browser testing: opening the app signed out showed an "Unmatched Route" page, and the tab labels were clipped.
 - **How M1 was checked:** TypeScript, ESLint and Jest pass. Every screen was driven in a browser at phone size: 14 checks without Supabase configured (route protection, validation, error states), and 16 checks for sign-in, sign-out, register, password reset and session persistence against a simulated Supabase Auth API. **Not yet tested against a real Supabase project or on a physical phone.**
 
+- **NativeWind (after M8):** AI checked that the stable NativeWind 4.2.7 builds on Expo SDK 58 (it only officially lists SDK 57; NativeWind 5 is still a release candidate), then moved all 31 styled files from `StyleSheet` to classes. The look is unchanged: the same colors, sizes and dark mode, read from `src/theme` through CSS variables. A test fails if `tailwind.config.js` or `global.css` stop matching `src/theme`. **Checked:** TypeScript, ESLint, 313 tests, and web and Android bundles build with every class present in the generated CSS. **Not yet checked by eye** in a browser or on a phone.
 - **What AI did in M8:** read the TanStack Query persistence and Expo SDK 58 `expo-network` docs, then wrote the per-user persisted cache, the online/offline wiring, the queued offline save of checks, the offline banner and "offline, nothing saved yet" state, and 14 new tests that use the real TanStack Query and persister (restore after restart, per-user separation, delete on sign-out, Google answers not saved, offline save resumed after a restart, other changes failing fast). Breaking the offline-save setting on purpose made a test fail.
 - **How M8 was checked:** 296 unit tests, 35 database tests, 12 function tests, TypeScript, ESLint and `expo-doctor` pass. **Not yet tested in a browser or on a phone** (airplane mode on and off). Jest sometimes prints a "worker failed to exit" warning in the full run; every test still passes.
 - **What AI did in M7:** read the current Google Safe Browsing and Supabase Edge Function docs, then wrote the `safe-browsing` Edge Function (input checks, the Google request, a reply that contains only "listed / not listed" and the threat types), the app service and hook, merging Google's answer into the score, the result-screen states, and 34 new tests (22 Jest, 12 Node). The weight of 60 for a Google listing was proposed by AI and **should be reviewed by me**. The wording test was changed to allow the product name "Safe Browsing" (the first version also flagged the function's name, `safe-browsing`).
