@@ -1,11 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { FormMessage } from '@/components/form/form-message';
 import { useResendConfirmation } from '@/hooks/use-auth-actions';
 import { useResendCooldown } from '@/hooks/use-resend-cooldown';
-import { spacing } from '@/theme';
 
 /**
  * "Resend confirmation email" with a countdown, so people don't hit Supabase's
@@ -25,7 +24,7 @@ export function ResendConfirmation({ email, sentJustNow = false }: { email: stri
 
   const waiting = secondsLeft > 0;
   return (
-    <View style={styles.box}>
+    <View className="gap-sm">
       {resend.isSuccess && (
         <FormMessage
           tone="success"
@@ -44,9 +43,3 @@ export function ResendConfirmation({ email, sentJustNow = false }: { email: stri
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  box: {
-    gap: spacing.sm,
-  },
-});

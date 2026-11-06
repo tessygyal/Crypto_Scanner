@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
-import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing, typography } from '@/theme';
+import { cn } from '@/utils/cn';
 
 type Props<T extends FieldValues> = {
   control: Control<T>;
@@ -37,15 +37,15 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
       control={control}
       name={name}
       render={({ field: { onChange, onBlur, value, ref }, fieldState: { error } }) => (
-        <View style={styles.field}>
+        <View className="gap-xs">
           <ThemedText variant="smallBold" nativeID={`${name}-label`}>
             {label}
           </ThemedText>
           <View
-            style={[
-              styles.inputRow,
-              { backgroundColor: theme.surface, borderColor: error ? theme.danger : theme.border },
-            ]}>
+            className={cn(
+              'min-h-12 flex-row items-center rounded-md border bg-surface',
+              error ? 'border-danger' : 'border-border'
+            )}>
             <TextInput
               ref={ref}
               value={value ?? ''}
@@ -54,11 +54,15 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
               secureTextEntry={secure && hidden}
               autoCapitalize={inputProps.autoCapitalize ?? 'none'}
               autoCorrect={false}
+              // A prop, not a style, so it needs the raw color.
               placeholderTextColor={theme.textSecondary}
               accessibilityLabel={label}
               aria-labelledby={`${name}-label`}
               aria-invalid={!!error}
-              style={[styles.input, inputProps.multiline && styles.multiline, { color: theme.text }]}
+              className={cn(
+                'flex-1 px-md py-3 text-body text-text',
+                inputProps.multiline && 'min-h-[140px] align-top'
+              )}
               {...inputProps}
             />
             {secure && (
@@ -67,7 +71,7 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
                 accessibilityRole="button"
                 accessibilityLabel={hidden ? `Show ${label.toLowerCase()}` : `Hide ${label.toLowerCase()}`}
                 hitSlop={8}
-                style={styles.toggle}>
+                className="px-md">
                 <ThemedText variant="smallBold" color="primary">
                   {hidden ? 'Show' : 'Hide'}
                 </ThemedText>
@@ -75,7 +79,7 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
             )}
           </View>
           {error?.message ? (
-            <ThemedText variant="small" style={{ color: theme.danger }} accessibilityLiveRegion="polite">
+            <ThemedText variant="small" color="danger" accessibilityLiveRegion="polite">
               {error.message}
             </ThemedText>
           ) : hint ? (
@@ -88,29 +92,3 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
     />
   );
 }
-
-const styles = StyleSheet.create({
-  field: {
-    gap: spacing.xs,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: radius.md,
-    minHeight: 48,
-  },
-  input: {
-    flex: 1,
-    ...typography.body,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + spacing.xs,
-  },
-  multiline: {
-    minHeight: 140,
-    textAlignVertical: 'top',
-  },
-  toggle: {
-    paddingHorizontal: spacing.md,
-  },
-});

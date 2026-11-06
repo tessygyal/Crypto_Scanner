@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, Pressable, View } from 'react-native';
 
 import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
@@ -13,9 +13,9 @@ import { ThemedText } from '@/components/themed-text';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMapReports } from '@/hooks/use-reports';
 import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/utils/cn';
 import { getApproximateLocation, LocationError } from '@/services/location';
 import type { MapReport } from '@/services/reports';
-import { radius, spacing } from '@/theme';
 import { formatWhen } from '@/utils/history';
 import { groupByLocation, type MapPlace } from '@/utils/map';
 import { isOfflineWithoutData } from '@/utils/offline';
@@ -53,16 +53,16 @@ export default function MapScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
+      <View className="gap-sm">
         <ThemedText variant="title">Map</ThemedText>
         <ThemedText color="textSecondary">
           Where approved scam reports have been seen across PNG. Locations are approximate (about 1 km).
         </ThemedText>
       </View>
 
-      <View style={[styles.mapBox, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+      <View className="overflow-hidden rounded-md border border-border bg-surface" style={{ height: MAP_HEIGHT }}>
         {reports.isLoading ? (
-          <View style={styles.mapPlaceholder}>
+          <View className="flex-1 items-center justify-center gap-sm">
             <ActivityIndicator color={theme.textSecondary} />
             <ThemedText color="textSecondary">Loading reports…</ThemedText>
           </View>
@@ -107,7 +107,7 @@ export default function MapScreen() {
       {selected && <SelectedPlace place={selected} onClose={() => setSelectedKey(null)} />}
 
       {places.length > 0 && (
-        <View style={styles.section}>
+        <View className="gap-sm">
           <ThemedText variant="heading">Places</ThemedText>
           {places.map((place) => (
             <Pressable
@@ -116,16 +116,12 @@ export default function MapScreen() {
               accessibilityRole="button"
               accessibilityState={{ selected: place.key === selectedKey }}
               accessibilityLabel={`${place.reports.length} ${place.reports.length === 1 ? 'report' : 'reports'} near ${place.key}`}
-              style={({ pressed }) => [
-                styles.placeRow,
-                {
-                  backgroundColor: place.key === selectedKey ? theme.surfaceSelected : theme.surface,
-                  borderColor: theme.border,
-                },
-                pressed && styles.pressed,
-              ]}>
+              className={cn(
+                'flex-row items-center gap-md rounded-md border border-border p-md active:opacity-70',
+                place.key === selectedKey ? 'bg-surface-selected' : 'bg-surface'
+              )}>
               <Ionicons name="location-outline" size={20} color={theme.textSecondary} />
-              <View style={styles.placeText}>
+              <View className="flex-1 gap-0.5">
                 <ThemedText variant="bodyBold">
                   {place.reports.length} {place.reports.length === 1 ? 'report' : 'reports'}
                 </ThemedText>
@@ -151,10 +147,10 @@ function SelectedPlace({ place, onClose }: { place: MapPlace<MapReport>; onClose
   const theme = useTheme();
   return (
     <View
-      style={[styles.panel, { borderColor: theme.primary, backgroundColor: theme.surface }]}
+      className="gap-sm rounded-md border-2 border-primary bg-surface p-md"
       accessibilityLiveRegion="polite">
-      <View style={styles.panelHeader}>
-        <ThemedText variant="bodyBold" style={styles.panelTitle}>
+      <View className="flex-row items-center gap-sm">
+        <ThemedText variant="bodyBold" className="flex-1">
           {place.reports.length} {place.reports.length === 1 ? 'report' : 'reports'} near {place.latitude.toFixed(2)},{' '}
           {place.longitude.toFixed(2)}
         </ThemedText>
@@ -168,8 +164,8 @@ function SelectedPlace({ place, onClose }: { place: MapPlace<MapReport>; onClose
           onPress={() => router.push({ pathname: '/report/[id]', params: { id: r.id } })}
           accessibilityRole="button"
           accessibilityLabel={`Report: ${SCHEME_LABELS[r.scheme_type]} on ${PLATFORM_LABELS[r.platform]}. Opens the report.`}
-          style={({ pressed }) => [styles.panelRow, { borderTopColor: theme.border }, pressed && styles.pressed]}>
-          <View style={styles.placeText}>
+          className="flex-row items-center gap-md border-t border-border pt-sm active:opacity-70">
+          <View className="flex-1 gap-0.5">
             <ThemedText variant="bodyBold">{SCHEME_LABELS[r.scheme_type]}</ThemedText>
             <ThemedText variant="small" color="textSecondary">
               {PLATFORM_LABELS[r.platform]} · {formatWhen(r.created_at)}
@@ -181,60 +177,3 @@ function SelectedPlace({ place, onClose }: { place: MapPlace<MapReport>; onClose
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    gap: spacing.sm,
-  },
-  mapBox: {
-    height: MAP_HEIGHT,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
-  mapPlaceholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  section: {
-    gap: spacing.sm,
-  },
-  placeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  placeText: {
-    flex: 1,
-    gap: 2,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  panel: {
-    borderWidth: 2,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  panelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  panelTitle: {
-    flex: 1,
-  },
-  panelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderTopWidth: 1,
-    paddingTop: spacing.sm,
-  },
-});

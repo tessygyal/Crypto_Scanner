@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { z } from 'zod';
 
 import { Button } from '@/components/button';
@@ -11,8 +11,6 @@ import { Disclaimer } from '@/components/disclaimer';
 import { TextField } from '@/components/form/text-field';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
 import { SCHEME_QUESTIONS } from '@/utils/risk/scheme-scorecard';
 import { analyzeUrl } from '@/utils/risk/url-analysis';
 
@@ -31,14 +29,14 @@ export default function CheckScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
+      <View className="gap-sm">
         <ThemedText variant="title">Check</ThemedText>
         <ThemedText color="textSecondary">
           Check a link you were sent, or answer a few questions about an offer, to see its risk indicators.
         </ThemedText>
       </View>
 
-      <View style={styles.modes} accessibilityRole="radiogroup" accessibilityLabel="What do you want to check?">
+      <View className="flex-row gap-sm" accessibilityRole="radiogroup" accessibilityLabel="What do you want to check?">
         <ChoiceChip label="Link" selected={mode === 'link'} onPress={() => setMode('link')} />
         <ChoiceChip label="Offer questions" selected={mode === 'scheme'} onPress={() => setMode('scheme')} />
       </View>
@@ -51,7 +49,6 @@ export default function CheckScreen() {
 }
 
 function LinkCheck() {
-  const theme = useTheme();
   const { control, handleSubmit, setError, setValue } = useForm<LinkForm>({
     resolver: zodResolver(linkSchema),
     defaultValues: { url: '' },
@@ -67,7 +64,7 @@ function LinkCheck() {
   });
 
   return (
-    <View style={styles.section}>
+    <View className="gap-md">
       <TextField
         control={control}
         name="url"
@@ -82,7 +79,7 @@ function LinkCheck() {
       />
       <Button label="Check link" onPress={onSubmit} fullWidth />
 
-      <View style={styles.examples}>
+      <View className="gap-sm">
         <ThemedText variant="smallBold" color="textSecondary">
           Try an example
         </ThemedText>
@@ -92,11 +89,7 @@ function LinkCheck() {
             onPress={() => setValue('url', example, { shouldValidate: true })}
             accessibilityRole="button"
             accessibilityLabel={`Use example ${example}`}
-            style={({ pressed }) => [
-              styles.example,
-              { borderColor: theme.border, backgroundColor: theme.surface },
-              pressed && styles.pressed,
-            ]}>
+            className="rounded-sm border border-border bg-surface px-md py-sm active:opacity-70">
             <ThemedText variant="small" numberOfLines={1}>
               {example}
             </ThemedText>
@@ -108,7 +101,6 @@ function LinkCheck() {
 }
 
 function SchemeCheck() {
-  const theme = useTheme();
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
   const yes = SCHEME_QUESTIONS.filter((q) => answers[q.id]).map((q) => q.id);
   const answered = Object.keys(answers).length;
@@ -116,18 +108,18 @@ function SchemeCheck() {
   const set = (id: string, value: boolean) => setAnswers((a) => ({ ...a, [id]: value }));
 
   return (
-    <View style={styles.section}>
+    <View className="gap-md">
       <ThemedText color="textSecondary">
         Think about the offer, investment or person that contacted you. Answer what you know — leave a
         question if you&apos;re not sure.
       </ThemedText>
 
       {SCHEME_QUESTIONS.map((q, i) => (
-        <View key={q.id} style={[styles.question, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+        <View key={q.id} className="border rounded-md p-md gap-sm border-border bg-surface">
           <ThemedText variant="bodyBold" nativeID={`q-${q.id}`}>
             {i + 1}. {q.question}
           </ThemedText>
-          <View style={styles.answerRow} accessibilityRole="radiogroup" aria-labelledby={`q-${q.id}`}>
+          <View className="flex-row gap-sm" accessibilityRole="radiogroup" aria-labelledby={`q-${q.id}`}>
             <ChoiceChip
               label="Yes"
               selected={answers[q.id] === true}
@@ -159,38 +151,3 @@ function SchemeCheck() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    gap: spacing.sm,
-  },
-  modes: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  section: {
-    gap: spacing.md,
-  },
-  examples: {
-    gap: spacing.sm,
-  },
-  example: {
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  question: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  answerRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-});

@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ChoiceChip } from '@/components/choice-chip';
@@ -8,8 +8,6 @@ import { FormMessage } from '@/components/form/form-message';
 import { TextField } from '@/components/form/text-field';
 import { LocationPicker } from '@/components/reports/location-picker';
 import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
 import { PLATFORMS, SCHEME_TYPES } from '@/types/database';
 import { PLATFORM_LABELS, reportSchema, SCHEME_LABELS, type ReportForm as FormValues, type ReportInput } from '@/utils/reports';
 
@@ -27,7 +25,6 @@ export function ReportForm({
   isPending: boolean;
   error: Error | null;
 }) {
-  const theme = useTheme();
   const { control, handleSubmit } = useForm<FormValues, unknown, ReportInput>({
     resolver: zodResolver(reportSchema),
     defaultValues: { description: '', location: null, ...defaultValues },
@@ -35,8 +32,8 @@ export function ReportForm({
   const description = useWatch({ control, name: 'description' }) ?? '';
 
   return (
-    <View style={styles.form}>
-      <View style={[styles.guidance, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+    <View className="gap-lg">
+      <View className="gap-xs rounded-md border border-border bg-surface p-md">
         <ThemedText variant="smallBold">Describe the scheme, not the people</ThemedText>
         <ThemedText variant="small" color="textSecondary">
           Say what was promised, how they contacted you and how they asked to be paid. Don&apos;t include names, phone
@@ -108,42 +105,21 @@ function ChipGroup<T extends string>({
   onChange: (value: T) => void;
   error?: string;
 }) {
-  const theme = useTheme();
   return (
-    <View style={styles.field}>
+    <View className="gap-sm">
       <ThemedText variant="smallBold" nativeID={`group-${label}`}>
         {label}
       </ThemedText>
-      <View style={styles.chips} accessibilityRole="radiogroup" aria-labelledby={`group-${label}`}>
+      <View className="flex-row flex-wrap gap-sm" accessibilityRole="radiogroup" aria-labelledby={`group-${label}`}>
         {options.map((o) => (
           <ChoiceChip key={o.value} label={o.label} selected={value === o.value} onPress={() => onChange(o.value)} />
         ))}
       </View>
       {error && (
-        <ThemedText variant="small" style={{ color: theme.danger }} accessibilityLiveRegion="polite">
+        <ThemedText variant="small" color="danger" accessibilityLiveRegion="polite">
           {error}
         </ThemedText>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  form: {
-    gap: spacing.lg,
-  },
-  guidance: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  field: {
-    gap: spacing.sm,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-});

@@ -1,11 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
 import { OFFLINE_NO_DATA_MESSAGE, OFFLINE_NO_DATA_TITLE } from '@/utils/offline';
 
 export type AsyncStateProps = {
@@ -44,7 +43,7 @@ export function AsyncState({
 
   if (isLoading) {
     return (
-      <View style={styles.row} accessibilityLiveRegion="polite">
+      <View className="flex-row items-center gap-sm" accessibilityLiveRegion="polite">
         <ActivityIndicator color={theme.textSecondary} />
         <ThemedText color="textSecondary">{loadingMessage}</ThemedText>
       </View>
@@ -54,10 +53,10 @@ export function AsyncState({
   if (error) {
     return (
       <View
-        style={[styles.box, { borderColor: theme.danger }]}
+        className="border rounded-md p-md gap-sm border-danger"
         accessibilityRole="alert"
         accessibilityLiveRegion="assertive">
-        <ThemedText variant="bodyBold" style={{ color: theme.danger }}>
+        <ThemedText variant="bodyBold" color="danger">
           Something went wrong
         </ThemedText>
         <ThemedText color="textSecondary">{error.message}</ThemedText>
@@ -68,8 +67,8 @@ export function AsyncState({
 
   if (isOffline) {
     return (
-      <View style={[styles.box, { borderColor: theme.border }]} accessibilityLiveRegion="polite">
-        <View style={styles.row}>
+      <View className="border rounded-md p-md gap-sm border-border" accessibilityLiveRegion="polite">
+        <View className="flex-row items-center gap-sm">
           <Ionicons name="cloud-offline-outline" size={18} color={theme.text} />
           <ThemedText variant="bodyBold">{OFFLINE_NO_DATA_TITLE}</ThemedText>
         </View>
@@ -80,7 +79,7 @@ export function AsyncState({
 
   if (isEmpty) {
     return (
-      <View style={[styles.box, { borderColor: theme.border }]}>
+      <View className="border rounded-md p-md gap-sm border-border">
         <ThemedText variant="bodyBold">{emptyTitle}</ThemedText>
         {emptyMessage && <ThemedText color="textSecondary">{emptyMessage}</ThemedText>}
       </View>
@@ -89,17 +88,3 @@ export function AsyncState({
 
   return <>{children}</>;
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  box: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-});

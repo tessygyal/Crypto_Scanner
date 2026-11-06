@@ -1,6 +1,10 @@
 /**
- * Design tokens. Components read colors through `useTheme()` (light/dark aware)
- * and import spacing, radius and typography directly from here.
+ * Design tokens: the single source of truth for colors and sizes.
+ *
+ * Components are styled with NativeWind classes (tailwind.config.js), which use
+ * these values: colors through CSS variables, sizes copied into the config (a
+ * test keeps them in sync). Use `useTheme()` only where a raw color value is
+ * needed, e.g. icon colors, ActivityIndicator or navigator options.
  */
 
 export const palette = {
@@ -32,6 +36,27 @@ export const palette = {
 
 export type ThemeColors = { [K in keyof typeof palette.light]: string };
 export type ThemeColor = keyof ThemeColors;
+
+/** "#1c5cab" → "28 92 171", the form Tailwind's rgb(var(--x) / <alpha-value>) needs. */
+export function hexToRgbChannels(hex: string): string {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? [...h].map((c) => c + c).join('') : h;
+  const n = parseInt(full, 16);
+  return `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`;
+}
+
+/** surfaceSelected → --color-surface-selected */
+export function cssVariableName(token: string): string {
+  return `--color-${token.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`;
+}
+
+/**
+ * CSS variables for NativeWind classes such as `bg-surface` or `text-primary`
+ * (see tailwind.config.js). Applied at the app root by <ThemeVariables>.
+ */
+export function cssColorVariables(colors: ThemeColors): Record<string, string> {
+  return Object.fromEntries(Object.entries(colors).map(([k, v]) => [cssVariableName(k), hexToRgbChannels(v)]));
+}
 
 /**
  * Risk-level colors. Always shown together with an icon and a text label,

@@ -1,10 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { RiskIcon } from '@/components/risk/risk-icon';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
 import type { CheckRow } from '@/types/database';
 import { CHECK_TYPE_LABEL, formatWhen } from '@/utils/history';
 import { LEVEL_COPY } from '@/utils/risk/scoring';
@@ -21,13 +20,9 @@ export function HistoryRow({ check, onPress }: { check: CheckRow; onPress: () =>
       accessibilityRole="button"
       accessibilityLabel={`${CHECK_TYPE_LABEL[check.type]} check: ${check.input}. ${label}, score ${check.score}. ${when}.`}
       accessibilityHint="Opens the saved result"
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-        pressed && styles.pressed,
-      ]}>
+      className="flex-row items-center gap-md rounded-md border border-border bg-surface p-md active:opacity-70">
       <RiskIcon level={check.risk_level} size={28} />
-      <View style={styles.text}>
+      <View className="flex-1 gap-0.5">
         <ThemedText variant="bodyBold" numberOfLines={1}>
           {check.input}
         </ThemedText>
@@ -42,21 +37,3 @@ export function HistoryRow({ check, onPress }: { check: CheckRow; onPress: () =>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  text: {
-    flex: 1,
-    gap: 2,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-});

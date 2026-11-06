@@ -1,11 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { StatusPill } from '@/components/reports/status-pill';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import type { Report } from '@/services/reports';
-import { radius, spacing } from '@/theme';
 import { formatWhen } from '@/utils/history';
 import { PLATFORM_LABELS, SCHEME_LABELS } from '@/utils/reports';
 
@@ -22,12 +21,8 @@ export function ReportRow({ report, showStatus, onPress }: { report: Report; sho
       accessibilityRole="button"
       accessibilityLabel={`Report: ${scheme} on ${platform}. ${when}.`}
       accessibilityHint="Opens the report"
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-        pressed && styles.pressed,
-      ]}>
-      <View style={styles.text}>
+      className="flex-row items-center gap-md rounded-md border border-border bg-surface p-md active:opacity-70">
+      <View className="flex-1 gap-xs">
         <ThemedText variant="bodyBold">{scheme}</ThemedText>
         <ThemedText variant="small" color="textSecondary">
           {platform} · {when}
@@ -42,21 +37,3 @@ export function ReportRow({ report, showStatus, onPress }: { report: Report; sho
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  text: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-});

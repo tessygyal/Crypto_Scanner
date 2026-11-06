@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
@@ -11,9 +11,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/context/auth-provider';
 import { useDeleteReport, useReport } from '@/hooks/use-reports';
-import { useTheme } from '@/hooks/use-theme';
 import type { Report } from '@/services/reports';
-import { radius, spacing } from '@/theme';
 import { formatDateTime } from '@/utils/history';
 import { isOfflineWithoutData } from '@/utils/offline';
 import { PLATFORM_LABELS, SCHEME_LABELS, STATUS_COPY } from '@/utils/reports';
@@ -50,14 +48,13 @@ export default function ReportScreen() {
 }
 
 function ReportDetails({ report }: { report: Report }) {
-  const theme = useTheme();
   const { user } = useAuth();
   const isMine = user?.id === report.user_id;
   const remove = useDeleteReport();
 
   return (
-    <View style={styles.page}>
-      <View style={styles.header}>
+    <View className="gap-lg">
+      <View className="gap-xs">
         <ThemedText variant="heading">{SCHEME_LABELS[report.scheme_type]}</ThemedText>
         <ThemedText color="textSecondary">
           Seen on {PLATFORM_LABELS[report.platform]} · reported {formatDateTime(report.created_at)}
@@ -66,7 +63,7 @@ function ReportDetails({ report }: { report: Report }) {
       </View>
 
       {isMine && (
-        <View style={[styles.box, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+        <View className="border rounded-md p-md gap-sm border-border bg-surface">
           <StatusPill status={report.status} />
           <ThemedText variant="small" color="textSecondary">
             {STATUS_COPY[report.status].detail}
@@ -74,12 +71,12 @@ function ReportDetails({ report }: { report: Report }) {
         </View>
       )}
 
-      <View style={styles.section}>
+      <View className="gap-sm">
         <ThemedText variant="smallBold">What happened</ThemedText>
         <ThemedText selectable>{report.description}</ThemedText>
       </View>
 
-      <View style={styles.section}>
+      <View className="gap-sm">
         <ThemedText variant="smallBold">Location</ThemedText>
         <ThemedText color="textSecondary">
           {report.latitude !== null && report.longitude !== null
@@ -89,7 +86,7 @@ function ReportDetails({ report }: { report: Report }) {
       </View>
 
       {isMine && (
-        <View style={styles.section}>
+        <View className="gap-sm">
           <Button
             label="Edit report"
             variant="secondary"
@@ -109,21 +106,3 @@ function ReportDetails({ report }: { report: Report }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  page: {
-    gap: spacing.lg,
-  },
-  header: {
-    gap: spacing.xs,
-  },
-  box: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  section: {
-    gap: spacing.sm,
-  },
-});

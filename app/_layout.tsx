@@ -1,8 +1,11 @@
+import '../global.css';
+
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { ThemeVariables } from '@/components/theme-variables';
 import { AuthProvider, useAuth } from '@/context/auth-provider';
 import { QueryProvider } from '@/context/query-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -18,7 +21,9 @@ export default function RootLayout() {
     <AuthProvider>
       <QueryProvider>
         <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <RootNavigator />
+          <ThemeVariables>
+            <RootNavigator />
+          </ThemeVariables>
           <StatusBar style="auto" />
         </ThemeProvider>
       </QueryProvider>

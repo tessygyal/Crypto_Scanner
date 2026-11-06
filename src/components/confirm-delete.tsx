@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { FormMessage } from '@/components/form/form-message';
 import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
 
 /**
  * "Delete" button with an in-app confirmation step. Used instead of a native
@@ -26,7 +24,6 @@ export function ConfirmDelete({
   isPending: boolean;
   error: Error | null;
 }) {
-  const theme = useTheme();
   const [confirming, setConfirming] = useState(false);
 
   if (!confirming) {
@@ -34,29 +31,16 @@ export function ConfirmDelete({
   }
 
   return (
-    <View style={[styles.box, { borderColor: theme.danger, backgroundColor: theme.surface }]} accessibilityRole="alert">
+    <View className="gap-sm rounded-md border border-danger bg-surface p-md" accessibilityRole="alert">
       <ThemedText variant="bodyBold">{question}</ThemedText>
       <ThemedText variant="small" color="textSecondary">
         {explanation}
       </ThemedText>
       {error && <FormMessage tone="error" message={error.message} />}
-      <View style={styles.buttons}>
+      <View className="flex-row gap-sm">
         <Button label="Delete" variant="danger" onPress={onConfirm} loading={isPending} />
         <Button label="Cancel" variant="secondary" onPress={() => setConfirming(false)} disabled={isPending} />
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  box: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  buttons: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-});

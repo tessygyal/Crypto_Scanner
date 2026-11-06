@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
@@ -14,7 +14,6 @@ import { ThemedText } from '@/components/themed-text';
 import { useSafeBrowsing } from '@/hooks/use-safe-browsing';
 import { useSaveCheck } from '@/hooks/use-save-check';
 import { useTheme } from '@/hooks/use-theme';
-import { spacing } from '@/theme';
 import { SAVE_QUEUED_MESSAGE } from '@/utils/offline';
 import { analyzeScheme, cleanSchemeAnswers } from '@/utils/risk/scheme-scorecard';
 import { LEVEL_COPY } from '@/utils/risk/scoring';
@@ -68,7 +67,7 @@ export default function CheckResultScreen() {
 
   return (
     <Screen hasHeader>
-      <View style={styles.input}>
+      <View className="gap-xs">
         <ThemedText variant="small" color="textSecondary">
           {result.type === 'url' ? 'Link checked' : 'Offer checked'}
         </ThemedText>
@@ -100,7 +99,7 @@ export default function CheckResultScreen() {
           <RiskSummary level={result.level} score={result.score} />
 
           {result.signals.length > 0 && (
-            <View style={styles.section}>
+            <View className="gap-md">
               <ThemedText variant="heading">
                 {indicators.length === 0
                   ? 'Notes'
@@ -112,12 +111,12 @@ export default function CheckResultScreen() {
             </View>
           )}
 
-          <View style={styles.section}>
+          <View className="gap-md">
             <ThemedText variant="heading">What to do</ThemedText>
             {LEVEL_COPY[result.level].advice.map((tip) => (
-              <View key={tip} style={styles.tip}>
+              <View key={tip} className="flex-row gap-sm">
                 <ThemedText>•</ThemedText>
-                <ThemedText style={styles.tipText}>{tip}</ThemedText>
+                <ThemedText className="flex-1">{tip}</ThemedText>
               </View>
             ))}
           </View>
@@ -151,9 +150,9 @@ function SaveStatus({ result }: { result: RiskResult }) {
 
   if (save.isPaused) {
     return (
-      <View style={styles.saveRow} accessibilityLiveRegion="polite">
+      <View className="flex-row items-center gap-sm" accessibilityLiveRegion="polite">
         <Ionicons name="cloud-offline-outline" size={18} color={theme.textSecondary} />
-        <ThemedText variant="small" color="textSecondary" style={styles.tipText}>
+        <ThemedText variant="small" color="textSecondary" className="flex-1">
           {SAVE_QUEUED_MESSAGE}
         </ThemedText>
       </View>
@@ -161,7 +160,7 @@ function SaveStatus({ result }: { result: RiskResult }) {
   }
   if (save.isPending) {
     return (
-      <View style={styles.saveRow} accessibilityLiveRegion="polite">
+      <View className="flex-row items-center gap-sm" accessibilityLiveRegion="polite">
         <ActivityIndicator color={theme.textSecondary} />
         <ThemedText variant="small" color="textSecondary">
           Saving to your history…
@@ -171,7 +170,7 @@ function SaveStatus({ result }: { result: RiskResult }) {
   }
   if (save.isError) {
     return (
-      <View style={styles.section}>
+      <View className="gap-md">
         <FormMessage tone="error" title="Not saved to history" message={save.error.message} />
         <Button label="Try saving again" variant="secondary" onPress={() => save.mutate(result)} />
       </View>
@@ -179,7 +178,7 @@ function SaveStatus({ result }: { result: RiskResult }) {
   }
   if (save.isSuccess) {
     return (
-      <View style={styles.saveRow} accessibilityLiveRegion="polite">
+      <View className="flex-row items-center gap-sm" accessibilityLiveRegion="polite">
         <Ionicons name="checkmark-circle-outline" size={18} color={theme.textSecondary} />
         <ThemedText variant="small" color="textSecondary">
           Saved to your history
@@ -189,24 +188,3 @@ function SaveStatus({ result }: { result: RiskResult }) {
   }
   return null;
 }
-
-const styles = StyleSheet.create({
-  input: {
-    gap: spacing.xs,
-  },
-  section: {
-    gap: spacing.md,
-  },
-  tip: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  tipText: {
-    flex: 1,
-  },
-  saveRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-});

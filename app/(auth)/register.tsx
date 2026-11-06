@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ConfigNotice } from '@/components/config-notice';
@@ -11,7 +11,6 @@ import { TextField } from '@/components/form/text-field';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useSignUp } from '@/hooks/use-auth-actions';
-import { spacing } from '@/theme';
 import { FriendlyAuthError } from '@/utils/auth-errors';
 import { registerSchema, type RegisterForm } from '@/utils/auth-validation';
 
@@ -54,7 +53,7 @@ export default function RegisterScreen() {
 
       <ConfigNotice />
 
-      <View style={styles.form}>
+      <View className="gap-md">
         <TextField
           control={control}
           name="displayName"
@@ -114,9 +113,3 @@ export default function RegisterScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  form: {
-    gap: spacing.md,
-  },
-});

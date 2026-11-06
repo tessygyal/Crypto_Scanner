@@ -1,8 +1,8 @@
-import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
+import { cn } from '@/utils/cn';
 
 export type ButtonProps = {
   label: string;
@@ -14,11 +14,16 @@ export type ButtonProps = {
   fullWidth?: boolean;
 };
 
+const BOX = {
+  primary: 'bg-primary',
+  secondary: 'border border-border bg-surface',
+  danger: 'bg-danger',
+} as const;
+
+const TEXT = { primary: 'onPrimary', secondary: 'text', danger: 'onDanger' } as const;
+
 export function Button({ label, onPress, variant = 'primary', loading, disabled, fullWidth }: ButtonProps) {
   const theme = useTheme();
-  const filled = variant !== 'secondary';
-  const fill = variant === 'danger' ? theme.danger : theme.primary;
-  const textColor = variant === 'danger' ? theme.onDanger : filled ? theme.onPrimary : theme.text;
   const inactive = disabled || loading;
   return (
     <Pressable
@@ -26,37 +31,16 @@ export function Button({ label, onPress, variant = 'primary', loading, disabled,
       disabled={inactive}
       accessibilityRole="button"
       accessibilityState={{ disabled: inactive, busy: loading }}
-      style={({ pressed }) => [
-        styles.button,
-        filled
-          ? { backgroundColor: fill }
-          : { backgroundColor: theme.surface, borderColor: theme.border, borderWidth: 1 },
-        fullWidth && styles.fullWidth,
-        (pressed || inactive) && styles.dimmed,
-      ]}>
-      {loading && <ActivityIndicator color={textColor} />}
-      <ThemedText variant="bodyBold" style={{ color: textColor }}>
+      className={cn(
+        'min-h-12 flex-row items-center justify-center gap-sm rounded-md px-lg active:opacity-60',
+        BOX[variant],
+        fullWidth ? 'self-stretch' : 'self-start',
+        inactive && 'opacity-60'
+      )}>
+      {loading && <ActivityIndicator color={theme[TEXT[variant]]} />}
+      <ThemedText variant="bodyBold" color={TEXT[variant]}>
         {label}
       </ThemedText>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    minHeight: 48,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    alignSelf: 'flex-start',
-  },
-  fullWidth: {
-    alignSelf: 'stretch',
-  },
-  dimmed: {
-    opacity: 0.6,
-  },
-});

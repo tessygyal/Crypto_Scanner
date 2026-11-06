@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ConfigNotice } from '@/components/config-notice';
@@ -12,7 +12,6 @@ import { TextField } from '@/components/form/text-field';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useSignIn } from '@/hooks/use-auth-actions';
-import { spacing } from '@/theme';
 import { FriendlyAuthError } from '@/utils/auth-errors';
 import { loginSchema, type LoginForm } from '@/utils/auth-validation';
 
@@ -28,14 +27,14 @@ export default function LoginScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
+      <View className="gap-sm mt-lg">
         <ThemedText variant="title">Scam Detector PNG</ThemedText>
         <ThemedText color="textSecondary">Sign in to check links and report scam schemes.</ThemedText>
       </View>
 
       <ConfigNotice />
 
-      <View style={styles.form}>
+      <View className="gap-md">
         <TextField
           control={control}
           name="email"
@@ -65,14 +64,14 @@ export default function LoginScreen() {
 
         <Button label="Sign in" onPress={onSubmit} loading={signIn.isPending} fullWidth />
 
-        <Link href="/forgot-password" style={styles.link}>
+        <Link href="/forgot-password" className="self-center py-sm">
           <ThemedText variant="smallBold" color="primary">
             Forgot your password?
           </ThemedText>
         </Link>
       </View>
 
-      <View style={styles.footer}>
+      <View className="flex-row justify-center items-center gap-sm">
         <ThemedText color="textSecondary">New here?</ThemedText>
         <Link href="/register">
           <ThemedText variant="bodyBold" color="primary">
@@ -85,23 +84,3 @@ export default function LoginScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  form: {
-    gap: spacing.md,
-  },
-  link: {
-    alignSelf: 'center',
-    paddingVertical: spacing.sm,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-});

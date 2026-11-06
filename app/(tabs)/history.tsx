@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AsyncState } from '@/components/async-state';
@@ -9,7 +9,7 @@ import { OfflineBanner } from '@/components/offline-banner';
 import { ThemedText } from '@/components/themed-text';
 import { useCheckHistory } from '@/hooks/use-history';
 import { useTheme } from '@/hooks/use-theme';
-import { maxContentWidth, spacing } from '@/theme';
+import { spacing } from '@/theme';
 import { isOfflineWithoutData } from '@/utils/offline';
 
 export default function HistoryScreen() {
@@ -21,15 +21,14 @@ export default function HistoryScreen() {
 
   return (
     <FlatList
-      style={{ backgroundColor: theme.background }}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.xl },
-      ]}
+      className="bg-background"
+      contentContainerClassName="px-lg"
+      // Safe-area insets are only known at runtime, so they stay as a style.
+      contentContainerStyle={{ paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
       data={history.isSuccess ? checks : []}
       keyExtractor={(c) => c.id}
       renderItem={({ item }) => (
-        <View style={styles.item}>
+        <View className="w-full max-w-content self-center mb-sm">
           <HistoryRow
             check={item}
             onPress={() => router.push({ pathname: '/history/[id]', params: { id: item.id } })}
@@ -37,7 +36,7 @@ export default function HistoryScreen() {
         </View>
       )}
       ListHeaderComponent={
-        <View style={styles.header}>
+        <View className="w-full max-w-content self-center gap-md mb-md">
           <ThemedText variant="title">History</ThemedText>
           <ThemedText color="textSecondary">Your past checks. Tap one to view, re-run or delete it.</ThemedText>
           <OfflineBanner />
@@ -62,7 +61,7 @@ export default function HistoryScreen() {
       }
       ListFooterComponent={
         history.hasNextPage || history.isFetchingNextPage ? (
-          <View style={styles.footer}>
+          <View className="py-md items-center">
             {history.isFetchingNextPage ? (
               <ActivityIndicator color={theme.textSecondary} accessibilityLabel="Loading more checks" />
             ) : (
@@ -87,28 +86,3 @@ export default function HistoryScreen() {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  // Cells stretch to the full list width; each child is then capped and centred.
-  // (Centring the whole container would size each row to its own text.)
-  content: {
-    paddingHorizontal: spacing.lg,
-  },
-  header: {
-    width: '100%',
-    maxWidth: maxContentWidth,
-    alignSelf: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-  item: {
-    width: '100%',
-    maxWidth: maxContentWidth,
-    alignSelf: 'center',
-    marginBottom: spacing.sm,
-  },
-  footer: {
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-});

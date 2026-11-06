@@ -1,9 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
 import type { Signal } from '@/utils/risk/types';
 
 type ListedSignal = Pick<Signal, 'id' | 'title' | 'weight'> & { detail?: string };
@@ -14,24 +13,25 @@ export function SignalList({ signals }: { signals: ListedSignal[] }) {
   const indicators = [...signals].sort((a, b) => b.weight - a.weight);
 
   return (
-    <View style={styles.list}>
+    <View className="gap-sm">
       {indicators.map((s) => {
         const isInfo = s.weight === 0;
         return (
           <View
             key={s.id}
-            style={[styles.item, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            className="flex-row gap-sm rounded-md border border-border bg-surface p-md"
             accessible
             accessibilityLabel={`${isInfo ? 'Note' : 'Risk indicator'}: ${s.title}.${s.detail ? ` ${s.detail}` : ''}`}>
             <Ionicons
               name={isInfo ? 'information-circle-outline' : 'alert-circle-outline'}
               size={22}
+              // Icon colors are props, so they need the raw value.
               color={isInfo ? theme.textSecondary : theme.danger}
-              style={styles.icon}
+              style={{ marginTop: 1 }}
             />
-            <View style={styles.text}>
-              <View style={styles.titleRow}>
-                <ThemedText variant="bodyBold" style={styles.title}>
+            <View className="flex-1 gap-xs">
+              <View className="flex-row items-start gap-sm">
+                <ThemedText variant="bodyBold" className="flex-1">
                   {s.title}
                 </ThemedText>
                 {!isInfo && (
@@ -52,31 +52,3 @@ export function SignalList({ signals }: { signals: ListedSignal[] }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  list: {
-    gap: spacing.sm,
-  },
-  item: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  icon: {
-    marginTop: 1,
-  },
-  text: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'flex-start',
-  },
-  title: {
-    flex: 1,
-  },
-});

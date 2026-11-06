@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Color variables for the web, where pop-ups (modals) render outside the app root.
+   Phones get the same values from <ThemeVariables>. Generated from src/theme;
+   a unit test fails if they drift apart. */
+@layer base {
+  :root {
+    --color-background: 255 255 255;
+    --color-surface: 244 245 247;
+    --color-surface-selected: 230 232 236;
+    --color-border: 217 220 225;
+    --color-text: 11 11 11;
+    --color-text-secondary: 82 81 78;
+    --color-primary: 28 92 171;
+    --color-on-primary: 255 255 255;
+    --color-danger: 180 35 24;
+    --color-on-danger: 255 255 255;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background: 13 13 13;
+      --color-surface: 26 26 25;
+      --color-surface-selected: 44 44 42;
+      --color-border: 56 56 53;
+      --color-text: 240 239 236;
+      --color-text-secondary: 195 194 183;
+      --color-primary: 85 152 231;
+      --color-on-primary: 11 11 11;
+      --color-danger: 249 112 102;
+      --color-on-danger: 11 11 11;
+    }
+  }
+}
