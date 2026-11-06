@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "scam-detector",
+    "name": "Scam Detector PNG",
     "slug": "scam-detector",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,7 +20,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "server",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -31,6 +31,13 @@
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Scam Detector PNG uses your approximate location (rounded to about 1 km) to place your scam report on the community map. You can report without sharing your location."
         }
       ]
     ],
