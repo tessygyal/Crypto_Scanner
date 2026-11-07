@@ -18,7 +18,7 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 | **M7 — Google Safe Browsing** | ✅ Done (Edge Function; key stays on the server) |
 | **M8 — Offline cache** | ✅ Done (history, reports and map open offline; offline checks saved later) |
 | **QR scan (Should)** | ✅ Done (camera or screenshot; links go through the normal check) |
-| M9 + | Planned (see the project plan) |
+| Not built | CoinGecko token lookup, screenshot evidence on reports, in-app moderation screen, and the *Could* features (see [Known limitations](#known-limitations)) |
 
 **QR scan delivers:** a "Scan a QR code" button on the Check tab. The scan screen reads a QR code with the camera (`expo-camera`) or from a screenshot (`expo-image-picker`), because scam QR codes are often sent as images in chats. If the code holds a link, it goes straight to the normal link check (offline analysis + Google Safe Browsing) and the result says "Link from a QR code". Other codes are explained, never judged: crypto payment requests (with the coin and amount, and a warning that crypto payments can't be reversed), Wi-Fi networks, phone/SMS/email codes, and plain text. Nothing is opened or paid, and images stay on the phone. The camera asks only for camera access (no microphone).
 
@@ -69,8 +69,18 @@ The map is [Leaflet](https://leafletjs.com) with [OpenStreetMap](https://www.ope
 ## Features (by priority)
 
 - **Must:** auth, offline URL analysis, one external API (Google Safe Browsing via a backend function), report CRUD, map of reports, check history, offline cache.
-- **Should:** CoinGecko token lookup, QR scan, screenshot upload, password reset, moderation.
-- **Could:** RDAP domain age, notifications, Tok Pisin.
+- **Must:** ✅ all done.
+- **Should:** ✅ QR scan, ✅ password reset, ✅ moderation (in the Supabase dashboard, not in the app). Not built: CoinGecko token lookup, screenshot upload.
+- **Could:** RDAP domain age, notifications, Tok Pisin. Not built.
+
+## Known limitations
+
+- **Not built:** CoinGecko token lookup, screenshot evidence on reports (the private `evidence` storage bucket and table exist, but the app doesn't upload yet), an in-app moderation screen, and the *Could* features.
+- **Moderation is manual:** new reports stay *Pending review* until someone sets `status` to `approved` in the Supabase dashboard (Table Editor → `reports`).
+- **Emails:** Supabase's built-in email sender allows only about 2 sign-up/reset emails per hour. A real launch needs custom SMTP.
+- **Tested mostly in a browser:** the camera (QR scan), the map inside the phone WebView, and airplane-mode offline behaviour were built and unit-tested, but have had little testing on a real phone. The app icon only shows in an EAS build (Expo Go shows its own).
+- **The risk check is advice, not a verdict:** rule weights and word lists were proposed by AI and should be reviewed against real PNG scam examples. Google Safe Browsing only knows sites that have already been reported.
+- **Map tiles** come from OpenStreetMap's free servers, which is fine for light student use only.
 
 ## Tech stack
 
