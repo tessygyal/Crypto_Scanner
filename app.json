@@ -40,6 +40,22 @@
         {
           "locationWhenInUsePermission": "Scam Detector PNG uses your approximate location (rounded to about 1 km) to place your scam report on the community map. You can report without sharing your location."
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Scam Detector PNG uses the camera to read QR codes so it can check the link inside before you open it. No photos are saved or uploaded.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Scam Detector PNG reads a QR code from a screenshot you choose. The image stays on your phone.",
+          "cameraPermission": "Scam Detector PNG uses the camera to read QR codes so it can check the link inside before you open it. No photos are saved or uploaded.",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

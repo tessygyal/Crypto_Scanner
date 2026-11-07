@@ -21,7 +21,7 @@ import type { RiskResult } from '@/utils/risk/types';
 import { analyzeUrl } from '@/utils/risk/url-analysis';
 import { safeBrowsingTarget, withSafeBrowsing } from '@/utils/safe-browsing';
 
-type Params = { type?: string; input?: string; answers?: string };
+type Params = { type?: string; input?: string; answers?: string; source?: string };
 
 /** Work out the offline result from the route params. This part runs on the phone. */
 function resultFromParams(params: Params): { result: RiskResult } | { error: string } {
@@ -69,7 +69,7 @@ export default function CheckResultScreen() {
     <Screen hasHeader>
       <View className="gap-xs">
         <ThemedText variant="small" color="textSecondary">
-          {result.type === 'url' ? 'Link checked' : 'Offer checked'}
+          {result.type === 'url' ? (params.source === 'qr' ? 'Link from a QR code' : 'Link checked') : 'Offer checked'}
         </ThemedText>
         <ThemedText variant="bodyBold" selectable>
           {result.input}

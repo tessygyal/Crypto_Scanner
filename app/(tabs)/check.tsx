@@ -6,6 +6,7 @@ import { Pressable, View } from 'react-native';
 import { z } from 'zod';
 
 import { Button } from '@/components/button';
+import { Card } from '@/components/card';
 import { ChoiceChip } from '@/components/choice-chip';
 import { Disclaimer } from '@/components/disclaimer';
 import { TextField } from '@/components/form/text-field';
@@ -13,7 +14,6 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { SCHEME_QUESTIONS } from '@/utils/risk/scheme-scorecard';
 import { analyzeUrl } from '@/utils/risk/url-analysis';
-import { Card } from '@/components/card';
 
 type Mode = 'link' | 'scheme';
 
@@ -77,6 +77,7 @@ function LinkCheck() {
         onSubmitEditing={() => onSubmit()}
       />
       <Button label="Check link" onPress={onSubmit} fullWidth />
+      <Button label="Scan a QR code" variant="secondary" onPress={() => router.push('/scan')} fullWidth />
 
       <View className="gap-sm">
         <ThemedText variant="smallBold" color="textSecondary">
