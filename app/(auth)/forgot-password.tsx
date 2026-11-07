@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ConfigNotice } from '@/components/config-notice';
@@ -9,6 +8,7 @@ import { TextField } from '@/components/form/text-field';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useRequestPasswordReset, useResetPassword } from '@/hooks/use-auth-actions';
+import { Card } from '@/components/card';
 import {
   requestResetSchema,
   resetPasswordSchema,
@@ -35,7 +35,7 @@ export default function ForgotPasswordScreen() {
       <ConfigNotice />
 
       {!sentTo ? (
-        <View className="gap-md">
+        <Card className="gap-md">
           <ThemedText color="textSecondary">
             Enter the email you signed up with. We&apos;ll email you a code to set a new password.
           </ThemedText>
@@ -57,7 +57,7 @@ export default function ForgotPasswordScreen() {
             loading={request.isPending}
             fullWidth
           />
-        </View>
+        </Card>
       ) : (
         <ResetStep email={sentTo} onUseDifferentEmail={() => request.reset()} />
       )}
@@ -76,7 +76,7 @@ function ResetStep({ email, onUseDifferentEmail }: { email: string; onUseDiffere
   const onSubmit = handleSubmit(({ code, password }) => reset.mutate({ email, code, password }));
 
   return (
-    <View className="gap-md">
+    <Card className="gap-md">
       <FormMessage
         tone="success"
         title="Check your email"
@@ -118,6 +118,6 @@ function ResetStep({ email, onUseDifferentEmail }: { email: string; onUseDiffere
       {reset.error && <FormMessage tone="error" message={reset.error.message} />}
       <Button label="Set new password" onPress={onSubmit} loading={reset.isPending} fullWidth />
       <Button label="Use a different email" variant="secondary" onPress={onUseDifferentEmail} fullWidth />
-    </View>
+    </Card>
   );
 }

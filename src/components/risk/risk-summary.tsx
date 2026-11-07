@@ -2,7 +2,7 @@ import { View } from 'react-native';
 
 import { RiskIcon } from '@/components/risk/risk-icon';
 import { ThemedText } from '@/components/themed-text';
-import { riskColors } from '@/theme';
+import { cardShadow, riskColors } from '@/theme';
 import { LEVEL_COPY } from '@/utils/risk/scoring';
 import type { RiskLevel } from '@/utils/risk/types';
 
@@ -17,8 +17,8 @@ export function RiskSummary({ level, score }: { level: RiskLevel; score: number 
 
   return (
     <View
-      className="gap-md rounded-md border border-l-[6px] border-border bg-surface p-md"
-      style={{ borderLeftColor: color }}
+      className="gap-md rounded-lg border border-l-[6px] border-border bg-surface p-md"
+      style={[cardShadow, { borderLeftColor: color }]}
       accessibilityRole="summary"
       accessibilityLabel={`${copy.label}. Risk score ${score} out of 100. ${copy.summary}`}>
       <View className="flex-row items-center gap-sm">

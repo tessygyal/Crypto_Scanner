@@ -8,29 +8,37 @@
  */
 
 export const palette = {
+  // "Trustworthy blue": navy header area, tinted page, white cards. Every text/background
+  // pair here meets WCAG AA contrast (4.5:1) in both modes.
   light: {
-    background: '#ffffff',
-    surface: '#f4f5f7',
-    surfaceSelected: '#e6e8ec',
-    border: '#d9dce1',
-    text: '#0b0b0b',
-    textSecondary: '#52514e',
-    primary: '#1c5cab',
+    background: '#f2f5fa',
+    surface: '#ffffff',
+    surfaceSelected: '#e3eaf5',
+    border: '#d6deea',
+    text: '#0f1b2d',
+    textSecondary: '#4a5568',
+    primary: '#1f5fbf',
     onPrimary: '#ffffff',
     danger: '#b42318',
     onDanger: '#ffffff',
+    hero: '#0b2a4a',
+    onHero: '#ffffff',
+    heroMuted: '#b9cbe6',
   },
   dark: {
-    background: '#0d0d0d',
-    surface: '#1a1a19',
-    surfaceSelected: '#2c2c2a',
-    border: '#383835',
-    text: '#f0efec',
-    textSecondary: '#c3c2b7',
-    primary: '#5598e7',
-    onPrimary: '#0b0b0b',
+    background: '#0a111d',
+    surface: '#121c2c',
+    surfaceSelected: '#1d2a40',
+    border: '#2a3a55',
+    text: '#eef2f8',
+    textSecondary: '#a9b6ca',
+    primary: '#6aa5ff',
+    onPrimary: '#0a111d',
     danger: '#f97066',
-    onDanger: '#0b0b0b',
+    onDanger: '#0a111d',
+    hero: '#0d1f38',
+    onHero: '#ffffff',
+    heroMuted: '#9fb4d4',
   },
 } as const;
 
@@ -84,7 +92,7 @@ export const spacing = {
 export const radius = {
   sm: 6,
   md: 12,
-  lg: 20,
+  lg: 16,
   pill: 999,
 } as const;
 
@@ -101,3 +109,9 @@ export type TypographyVariant = keyof typeof typography;
 
 /** Content width cap so screens stay readable on tablets and web. */
 export const maxContentWidth = 720;
+
+/**
+ * Soft shadow for cards. RN's boxShadow works on Android, iOS (New Architecture) and web.
+ * Barely visible in dark mode, where the border does the work.
+ */
+export const cardShadow = { boxShadow: '0 1px 2px rgba(15, 27, 45, 0.06), 0 2px 8px rgba(15, 27, 45, 0.06)' } as const;

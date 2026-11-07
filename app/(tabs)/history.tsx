@@ -3,10 +3,10 @@ import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AsyncState } from '@/components/async-state';
+import { HeroHeader } from '@/components/hero-header';
 import { Button } from '@/components/button';
 import { HistoryRow } from '@/components/history/history-row';
 import { OfflineBanner } from '@/components/offline-banner';
-import { ThemedText } from '@/components/themed-text';
 import { useCheckHistory } from '@/hooks/use-history';
 import { useTheme } from '@/hooks/use-theme';
 import { spacing } from '@/theme';
@@ -20,11 +20,13 @@ export default function HistoryScreen() {
   const isEmpty = history.isSuccess && checks.length === 0;
 
   return (
-    <FlatList
-      className="bg-background"
+    <View className="flex-1 bg-background">
+      <HeroHeader icon="time" title="History" subtitle="Your past checks. Tap one to view, re-run or delete it." />
+      <FlatList
+        className="flex-1"
       contentContainerClassName="px-lg"
       // Safe-area insets are only known at runtime, so they stay as a style.
-      contentContainerStyle={{ paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
+      contentContainerStyle={{ paddingTop: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
       data={history.isSuccess ? checks : []}
       keyExtractor={(c) => c.id}
       renderItem={({ item }) => (
@@ -37,8 +39,6 @@ export default function HistoryScreen() {
       )}
       ListHeaderComponent={
         <View className="w-full max-w-content self-center gap-md mb-md">
-          <ThemedText variant="title">History</ThemedText>
-          <ThemedText color="textSecondary">Your past checks. Tap one to view, re-run or delete it.</ThemedText>
           <OfflineBanner />
           {!history.isSuccess && (
             <AsyncState
@@ -83,6 +83,7 @@ export default function HistoryScreen() {
           tintColor={theme.textSecondary}
         />
       }
-    />
+      />
+    </View>
   );
 }

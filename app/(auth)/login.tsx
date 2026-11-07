@@ -14,6 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useSignIn } from '@/hooks/use-auth-actions';
 import { FriendlyAuthError } from '@/utils/auth-errors';
 import { loginSchema, type LoginForm } from '@/utils/auth-validation';
+import { Card } from '@/components/card';
 
 export default function LoginScreen() {
   const signIn = useSignIn();
@@ -26,15 +27,16 @@ export default function LoginScreen() {
   const onSubmit = handleSubmit((values) => signIn.mutate(values));
 
   return (
-    <Screen>
-      <View className="gap-sm mt-lg">
-        <ThemedText variant="title">Scam Detector PNG</ThemedText>
-        <ThemedText color="textSecondary">Sign in to check links and report scam schemes.</ThemedText>
-      </View>
+    <Screen
+      hero={{
+        icon: 'shield-checkmark',
+        title: 'Scam Detector PNG',
+        subtitle: 'Check before you pay. Sign in to check links and report scam schemes.',
+      }}>
 
       <ConfigNotice />
 
-      <View className="gap-md">
+      <Card className="gap-md">
         <TextField
           control={control}
           name="email"
@@ -69,7 +71,7 @@ export default function LoginScreen() {
             Forgot your password?
           </ThemedText>
         </Link>
-      </View>
+      </Card>
 
       <View className="flex-row justify-center items-center gap-sm">
         <ThemedText color="textSecondary">New here?</ThemedText>
