@@ -15,6 +15,7 @@ import type { Report } from '@/services/reports';
 import { formatDateTime } from '@/utils/history';
 import { isOfflineWithoutData } from '@/utils/offline';
 import { PLATFORM_LABELS, SCHEME_LABELS, STATUS_COPY } from '@/utils/reports';
+import { Card } from '@/components/card';
 
 export default function ReportScreen() {
   const { id, created } = useLocalSearchParams<{ id: string; created?: string }>();
@@ -63,12 +64,12 @@ function ReportDetails({ report }: { report: Report }) {
       </View>
 
       {isMine && (
-        <View className="border rounded-md p-md gap-sm border-border bg-surface">
+        <Card>
           <StatusPill status={report.status} />
           <ThemedText variant="small" color="textSecondary">
             {STATUS_COPY[report.status].detail}
           </ThemedText>
-        </View>
+        </Card>
       )}
 
       <View className="gap-sm">

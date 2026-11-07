@@ -21,11 +21,14 @@ module.exports = {
         'on-primary': color('on-primary'),
         danger: color('danger'),
         'on-danger': color('on-danger'),
+        hero: color('hero'),
+        'on-hero': color('on-hero'),
+        'hero-muted': color('hero-muted'),
         // Risk colors are the same in light and dark mode. Always pair with an icon + text label.
         risk: { none: '#0ca30c', low: '#fab219', medium: '#ec835a', high: '#d03b3b' },
       },
       spacing: { xs: '4px', sm: '8px', md: '16px', lg: '24px', xl: '32px', xxl: '64px' },
-      borderRadius: { sm: '6px', md: '12px', lg: '20px', pill: '999px' },
+      borderRadius: { sm: '6px', md: '12px', lg: '16px', pill: '999px' },
       fontSize: {
         title: ['32px', { lineHeight: '40px', fontWeight: '700' }],
         heading: ['20px', { lineHeight: '28px', fontWeight: '600' }],

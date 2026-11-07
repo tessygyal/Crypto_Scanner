@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import type { Signal } from '@/utils/risk/types';
+import { cardShadow } from '@/theme';
 
 type ListedSignal = Pick<Signal, 'id' | 'title' | 'weight'> & { detail?: string };
 
@@ -19,7 +20,8 @@ export function SignalList({ signals }: { signals: ListedSignal[] }) {
         return (
           <View
             key={s.id}
-            className="flex-row gap-sm rounded-md border border-border bg-surface p-md"
+            className="flex-row gap-sm rounded-lg border border-border bg-surface p-md"
+            style={cardShadow}
             accessible
             accessibilityLabel={`${isInfo ? 'Note' : 'Risk indicator'}: ${s.title}.${s.detail ? ` ${s.detail}` : ''}`}>
             <Ionicons

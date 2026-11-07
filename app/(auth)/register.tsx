@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ConfigNotice } from '@/components/config-notice';
@@ -13,6 +12,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useSignUp } from '@/hooks/use-auth-actions';
 import { FriendlyAuthError } from '@/utils/auth-errors';
 import { registerSchema, type RegisterForm } from '@/utils/auth-validation';
+import { Card } from '@/components/card';
 
 export default function RegisterScreen() {
   const signUp = useSignUp();
@@ -53,7 +53,7 @@ export default function RegisterScreen() {
 
       <ConfigNotice />
 
-      <View className="gap-md">
+      <Card className="gap-md">
         <TextField
           control={control}
           name="displayName"
@@ -109,7 +109,7 @@ export default function RegisterScreen() {
         )}
 
         <Button label="Create account" onPress={onSubmit} loading={signUp.isPending} fullWidth />
-      </View>
+      </Card>
     </Screen>
   );
 }

@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/use-theme';
 import type { Report } from '@/services/reports';
 import { formatWhen } from '@/utils/history';
 import { PLATFORM_LABELS, SCHEME_LABELS } from '@/utils/reports';
+import { cardShadow } from '@/theme';
 
 /** One report in a list. Shows the status pill only for the user's own reports. */
 export function ReportRow({ report, showStatus, onPress }: { report: Report; showStatus: boolean; onPress: () => void }) {
@@ -21,7 +22,8 @@ export function ReportRow({ report, showStatus, onPress }: { report: Report; sho
       accessibilityRole="button"
       accessibilityLabel={`Report: ${scheme} on ${platform}. ${when}.`}
       accessibilityHint="Opens the report"
-      className="flex-row items-center gap-md rounded-md border border-border bg-surface p-md active:opacity-70">
+      className="flex-row items-center gap-md rounded-lg border border-border bg-surface p-md active:opacity-70"
+      style={cardShadow}>
       <View className="flex-1 gap-xs">
         <ThemedText variant="bodyBold">{scheme}</ThemedText>
         <ThemedText variant="small" color="textSecondary">

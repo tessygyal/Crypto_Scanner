@@ -10,7 +10,7 @@ export const DISCLAIMER_TEXT =
 /** The app-wide disclaimer. Keep it visible on every screen that shows a result. */
 export function Disclaimer() {
   return (
-    <View className="gap-xs rounded-md border border-border bg-surface p-md" accessibilityRole="summary">
+    <View className="gap-xs rounded-lg bg-surface-selected p-md" accessibilityRole="summary">
       <ThemedText variant="smallBold">Disclaimer</ThemedText>
       <ThemedText variant="small" color="textSecondary">
         {DISCLAIMER_TEXT}

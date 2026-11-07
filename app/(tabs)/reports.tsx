@@ -4,11 +4,11 @@ import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AsyncState } from '@/components/async-state';
+import { HeroHeader } from '@/components/hero-header';
 import { Button } from '@/components/button';
 import { ChoiceChip } from '@/components/choice-chip';
 import { OfflineBanner } from '@/components/offline-banner';
 import { ReportRow } from '@/components/reports/report-row';
-import { ThemedText } from '@/components/themed-text';
 import { useReports } from '@/hooks/use-reports';
 import { useTheme } from '@/hooks/use-theme';
 import type { ReportScope } from '@/services/reports';
@@ -35,11 +35,13 @@ export default function ReportsScreen() {
   const isEmpty = reports.isSuccess && items.length === 0;
 
   return (
-    <FlatList
-      className="bg-background"
+    <View className="flex-1 bg-background">
+      <HeroHeader icon="megaphone" title="Community reports" subtitle="Scam schemes reported by people in PNG. Reports describe schemes and platforms, never named people." />
+      <FlatList
+        className="flex-1"
       contentContainerClassName="px-lg"
       // Safe-area insets are only known at runtime, so they stay as a style.
-      contentContainerStyle={{ paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
+      contentContainerStyle={{ paddingTop: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
       data={reports.isSuccess ? items : []}
       keyExtractor={(r) => r.id}
       renderItem={({ item }) => (
@@ -53,10 +55,6 @@ export default function ReportsScreen() {
       )}
       ListHeaderComponent={
         <View className="w-full max-w-content self-center gap-md mb-md">
-          <ThemedText variant="title">Reports</ThemedText>
-          <ThemedText color="textSecondary">
-            Scam schemes reported by people in PNG. Reports describe schemes and platforms, never named people.
-          </ThemedText>
           <Button label="Report a scam scheme" onPress={() => router.push('/report/new')} fullWidth />
 
           <View className="flex-row gap-sm" accessibilityRole="radiogroup" accessibilityLabel="Which reports to show">
@@ -107,6 +105,7 @@ export default function ReportsScreen() {
           tintColor={theme.textSecondary}
         />
       }
-    />
+      />
+    </View>
   );
 }

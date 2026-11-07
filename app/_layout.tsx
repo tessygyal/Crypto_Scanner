@@ -9,6 +9,7 @@ import { ThemeVariables } from '@/components/theme-variables';
 import { AuthProvider, useAuth } from '@/context/auth-provider';
 import { QueryProvider } from '@/context/query-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useNavHeaderOptions } from '@/hooks/use-nav-header-options';
 
 // Keep the splash screen up until we know whether the user is signed in,
 // so the login screen never flashes for a signed-in user.
@@ -24,7 +25,8 @@ export default function RootLayout() {
           <ThemeVariables>
             <RootNavigator />
           </ThemeVariables>
-          <StatusBar style="auto" />
+          {/* Every screen starts with a navy header, so the status bar text is always light. */}
+          <StatusBar style="light" />
         </ThemeProvider>
       </QueryProvider>
     </AuthProvider>
@@ -34,6 +36,7 @@ export default function RootLayout() {
 function RootNavigator() {
   const { session, isLoading } = useAuth();
   const isSignedIn = !!session;
+  const navHeader = useNavHeaderOptions();
 
   useEffect(() => {
     if (!isLoading) SplashScreen.hideAsync();
@@ -42,7 +45,7 @@ function RootNavigator() {
   if (isLoading) return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, ...navHeader }}>
       <Stack.Screen name="index" />
       {/* Protected routes: signed-in users only see the app; signed-out users only
           see the auth screens. Changing the session redirects automatically.

@@ -17,6 +17,7 @@ import { useSupabaseHealth } from '@/hooks/use-supabase-health';
 import type { Profile } from '@/types/database';
 import { editProfileSchema, type EditProfileForm } from '@/utils/auth-validation';
 import { isOfflineWithoutData } from '@/utils/offline';
+import { Card } from '@/components/card';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -25,10 +26,9 @@ export default function ProfileScreen() {
   const health = useSupabaseHealth();
 
   return (
-    <Screen>
-      <ThemedText variant="title">Profile</ThemedText>
+    <Screen hero={{ icon: 'person-circle', title: 'Profile', subtitle: 'Your account and app status.' }}>
 
-      <View className="border rounded-md p-md gap-md bg-surface border-border">
+      <Card className="gap-md">
         <AsyncState
           isLoading={profile.isLoading}
           error={profile.error}
@@ -42,7 +42,7 @@ export default function ProfileScreen() {
           {profile.data && <DisplayName profile={profile.data} />}
         </AsyncState>
         <Row label="Email" value={user?.email ?? '—'} />
-      </View>
+      </Card>
 
       {signOut.error && <FormMessage tone="error" message={signOut.error.message} />}
       {/* After sign-out, protected routes move to the login screen. */}

@@ -10,6 +10,7 @@ import { LocationPicker } from '@/components/reports/location-picker';
 import { ThemedText } from '@/components/themed-text';
 import { PLATFORMS, SCHEME_TYPES } from '@/types/database';
 import { PLATFORM_LABELS, reportSchema, SCHEME_LABELS, type ReportForm as FormValues, type ReportInput } from '@/utils/reports';
+import { Card } from '@/components/card';
 
 /** Create / edit form for a community report. */
 export function ReportForm({
@@ -33,13 +34,13 @@ export function ReportForm({
 
   return (
     <View className="gap-lg">
-      <View className="gap-xs rounded-md border border-border bg-surface p-md">
+      <Card className="gap-xs">
         <ThemedText variant="smallBold">Describe the scheme, not the people</ThemedText>
         <ThemedText variant="small" color="textSecondary">
           Say what was promised, how they contacted you and how they asked to be paid. Don&apos;t include names, phone
           numbers, email addresses or photos of people.
         </ThemedText>
-      </View>
+      </Card>
 
       <Controller
         control={control}

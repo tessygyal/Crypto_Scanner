@@ -30,6 +30,9 @@ const COLOR: Record<ThemeColor, string> = {
   onPrimary: 'text-on-primary',
   danger: 'text-danger',
   onDanger: 'text-on-danger',
+  hero: 'text-hero',
+  onHero: 'text-on-hero',
+  heroMuted: 'text-hero-muted',
 };
 
 export function ThemedText({ variant = 'body', color = 'text', className, ...rest }: ThemedTextProps) {

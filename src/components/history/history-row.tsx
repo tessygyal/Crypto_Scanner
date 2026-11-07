@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/use-theme';
 import type { CheckRow } from '@/types/database';
 import { CHECK_TYPE_LABEL, formatWhen } from '@/utils/history';
 import { LEVEL_COPY } from '@/utils/risk/scoring';
+import { cardShadow } from '@/theme';
 
 /** One check in the history list: risk level (icon + label), what was checked, when. */
 export function HistoryRow({ check, onPress }: { check: CheckRow; onPress: () => void }) {
@@ -20,7 +21,8 @@ export function HistoryRow({ check, onPress }: { check: CheckRow; onPress: () =>
       accessibilityRole="button"
       accessibilityLabel={`${CHECK_TYPE_LABEL[check.type]} check: ${check.input}. ${label}, score ${check.score}. ${when}.`}
       accessibilityHint="Opens the saved result"
-      className="flex-row items-center gap-md rounded-md border border-border bg-surface p-md active:opacity-70">
+      className="flex-row items-center gap-md rounded-lg border border-border bg-surface p-md active:opacity-70"
+      style={cardShadow}>
       <RiskIcon level={check.risk_level} size={28} />
       <View className="flex-1 gap-0.5">
         <ThemedText variant="bodyBold" numberOfLines={1}>

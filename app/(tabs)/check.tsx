@@ -13,6 +13,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { SCHEME_QUESTIONS } from '@/utils/risk/scheme-scorecard';
 import { analyzeUrl } from '@/utils/risk/url-analysis';
+import { Card } from '@/components/card';
 
 type Mode = 'link' | 'scheme';
 
@@ -28,14 +29,12 @@ export default function CheckScreen() {
   const [mode, setMode] = useState<Mode>('link');
 
   return (
-    <Screen>
-      <View className="gap-sm">
-        <ThemedText variant="title">Check</ThemedText>
-        <ThemedText color="textSecondary">
-          Check a link you were sent, or answer a few questions about an offer, to see its risk indicators.
-        </ThemedText>
-      </View>
-
+    <Screen
+      hero={{
+        icon: 'shield-checkmark',
+        title: 'Check before you pay',
+        subtitle: 'Check a link you were sent, or answer a few questions about an offer.',
+      }}>
       <View className="flex-row gap-sm" accessibilityRole="radiogroup" accessibilityLabel="What do you want to check?">
         <ChoiceChip label="Link" selected={mode === 'link'} onPress={() => setMode('link')} />
         <ChoiceChip label="Offer questions" selected={mode === 'scheme'} onPress={() => setMode('scheme')} />
@@ -115,7 +114,7 @@ function SchemeCheck() {
       </ThemedText>
 
       {SCHEME_QUESTIONS.map((q, i) => (
-        <View key={q.id} className="border rounded-md p-md gap-sm border-border bg-surface">
+        <Card key={q.id}>
           <ThemedText variant="bodyBold" nativeID={`q-${q.id}`}>
             {i + 1}. {q.question}
           </ThemedText>
@@ -133,7 +132,7 @@ function SchemeCheck() {
               accessibilityLabel={`No: ${q.question}`}
             />
           </View>
-        </View>
+        </Card>
       ))}
 
       <ThemedText variant="small" color="textSecondary">
