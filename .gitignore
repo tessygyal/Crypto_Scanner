@@ -45,3 +45,6 @@ yarn-error.*
 
 # test coverage
 coverage/
+
+# Supabase CLI link state (project ref, versions)
+supabase/.temp/
