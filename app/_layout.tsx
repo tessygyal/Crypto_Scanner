@@ -57,6 +57,10 @@ function RootNavigator() {
           options={{ headerShown: true, title: 'Check result', headerBackButtonDisplayMode: 'minimal' }}
         />
         <Stack.Screen
+          name="scan"
+          options={{ headerShown: true, title: 'Scan QR code', headerBackButtonDisplayMode: 'minimal' }}
+        />
+        <Stack.Screen
           name="history/[id]"
           options={{ headerShown: true, title: 'Saved check', headerBackButtonDisplayMode: 'minimal' }}
         />

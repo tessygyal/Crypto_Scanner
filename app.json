@@ -8,11 +8,11 @@
     "scheme": "scamdetector",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0b2a4a",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -29,9 +29,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#0b2a4a",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 160
         }
       ],
       "expo-sqlite",
@@ -39,6 +39,22 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Scam Detector PNG uses your approximate location (rounded to about 1 km) to place your scam report on the community map. You can report without sharing your location."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Scam Detector PNG uses the camera to read QR codes so it can check the link inside before you open it. No photos are saved or uploaded.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Scam Detector PNG reads a QR code from a screenshot you choose. The image stays on your phone.",
+          "cameraPermission": "Scam Detector PNG uses the camera to read QR codes so it can check the link inside before you open it. No photos are saved or uploaded.",
+          "microphonePermission": false
         }
       ]
     ],
