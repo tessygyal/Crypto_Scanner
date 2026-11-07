@@ -6,6 +6,7 @@ import { ReportForm } from '@/components/reports/report-form';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/context/auth-provider';
 import { useReport, useUpdateReport } from '@/hooks/use-reports';
+import { isOfflineWithoutData } from '@/utils/offline';
 
 export default function EditReportScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,6 +20,7 @@ export default function EditReportScreen() {
       <AsyncState
         isLoading={report.isLoading}
         error={report.error}
+        isOffline={isOfflineWithoutData(report)}
         isEmpty={report.isSuccess && !isMine}
         loadingMessage="Loading report…"
         emptyTitle="You can't edit this report"

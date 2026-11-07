@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
@@ -9,9 +9,9 @@ import { SignalList } from '@/components/risk/signal-list';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useCheck, useDeleteCheck } from '@/hooks/use-history';
-import { spacing } from '@/theme';
 import type { CheckRow } from '@/types/database';
 import { CHECK_TYPE_LABEL, formatDateTime, parseStoredSignals, rerunParams } from '@/utils/history';
+import { isOfflineWithoutData } from '@/utils/offline';
 
 /** A saved check exactly as it was recorded. Viewing does not create a new check. */
 export default function SavedCheckScreen() {
@@ -23,6 +23,7 @@ export default function SavedCheckScreen() {
       <AsyncState
         isLoading={check.isLoading}
         error={check.error}
+        isOffline={isOfflineWithoutData(check)}
         isEmpty={check.isSuccess && !check.data}
         loadingMessage="Loading check…"
         emptyTitle="Check not found"
@@ -42,8 +43,8 @@ function SavedCheck({ check }: { check: CheckRow }) {
   const rerun = rerunParams(check);
 
   return (
-    <View style={styles.page}>
-      <View style={styles.meta}>
+    <View className="gap-lg">
+      <View className="gap-xs">
         <ThemedText variant="small" color="textSecondary">
           {CHECK_TYPE_LABEL[check.type]} checked {formatDateTime(check.created_at)}
         </ThemedText>
@@ -55,7 +56,7 @@ function SavedCheck({ check }: { check: CheckRow }) {
       <RiskSummary level={check.risk_level} score={check.score} />
 
       {signals.length > 0 && (
-        <View style={styles.section}>
+        <View className="gap-md">
           <ThemedText variant="heading">
             {indicators.length === 1 ? '1 risk indicator' : indicators.length ? `${indicators.length} risk indicators` : 'Notes'}
           </ThemedText>
@@ -93,15 +94,3 @@ function DeleteCheck({ id }: { id: string }) {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  page: {
-    gap: spacing.lg,
-  },
-  meta: {
-    gap: spacing.xs,
-  },
-  section: {
-    gap: spacing.md,
-  },
-});

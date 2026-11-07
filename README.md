@@ -15,11 +15,13 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 | **M4 — Check history** | ✅ Done (view, re-run, delete) |
 | **M5 — Community reports** | ✅ Done (create, read, update, delete, location) |
 | **M6 — Community map** | ✅ Done (OpenStreetMap, no API key) |
-| M7 + | Planned (see the project plan) |
+| **M7 — Google Safe Browsing** | ✅ Done (Edge Function; key stays on the server) |
+| **M8 — Offline cache** | ✅ Done (history, reports and map open offline; offline checks saved later) |
+| M9 + | Planned (see the project plan) |
 
 **M0 delivers:** project structure (`app/` + `src/`), theme, TanStack Query provider, Supabase client, environment-variable validation, shared UI states (loading / success / empty / error), visible disclaimer, `eas.json` build profiles, Jest + ESLint, and a temporary setup-status home screen that checks the Supabase connection. The auth flow and tabs replace that screen in M1.
 
-**M1 delivers:** login, register and forgot-password screens (react-hook-form + zod), password reset with an emailed code, protected routes (signed-out users only see auth screens; signed-in users only see the app), the five tabs (Check, Reports, Map, History, Profile — placeholders except Profile), sign-out, and friendly error messages that never reveal whether an email has an account.
+**M1 delivers:** login, register and forgot-password screens (react-hook-form + zod), password reset with an emailed code, protected routes (signed-out users only see auth screens; signed-in users only see the app), the five tabs (Check, Reports, Map, History, Profile — placeholders except Profile), sign-out, and friendly error messages. *(Changed after M8: sign-up now says when an email is already registered, and there is a "Resend confirmation email" button. See [Sign-up emails](#sign-up-emails).)*
 
 **M2 delivers:** the Supabase database — `profiles`, `checks`, `reports` and `evidence` tables with Row Level Security, a sign-up trigger that creates each user's profile, a private `evidence` Storage bucket, TypeScript types for every table, 35 database tests, and an editable display name on the Profile tab (read from the database).
 
@@ -35,6 +37,21 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 - **Approximate location only.** "Use my approximate location" asks for permission (handling refused, blocked → Settings, and location turned off), uses low accuracy, and rounds to 2 decimal places (about 1 km) before anything is saved. Location is optional.
 - **Moderation.** New reports are *Pending review* and visible only to their author. A moderator approves or rejects them in the Supabase dashboard (Table Editor → `reports` → `status`). Editing a report sends it back to *Pending review* (enforced by the database, see M2).
 - Approved reports show the reporter's **display name**, never their email.
+
+**M7 delivers:** the *one external API* Must feature. Every link check is also looked up in **Google Safe Browsing** through a Supabase Edge Function (`supabase/functions/safe-browsing`), so the Google API key never reaches the app. A Google listing is a risk indicator worth 60 points, which on its own gives *High risk indicators*. "Not listed" is shown as a note that is *not proof* the link is trustworthy. The result screen waits for Google before showing the level, shows loading and error-with-retry states, and if Google can't be reached it uses only the on-phone checks and says so. The saved history entry includes Google's answer. Re-running a link from History looks it up again.
+
+### Google Safe Browsing: privacy and limits
+
+- **What is sent:** only the link being checked goes to our Edge Function and on to Google. Nothing else about the user is sent, and the function doesn't store or log the link.
+- **Who can call it:** only signed-in users. `verify_jwt` stays on (the default) and the function uses `withSupabase({ auth: 'user' })`.
+- **No verdicts:** Google's lists miss new scam sites, so "not listed" never lowers the score and is worded as "no known warnings".
+- **Terms:** the free v4 Lookup API is for non-commercial use, which suits this student project. A commercial launch would need Google's Web Risk API instead.
+- `javascript:` / `data:` links and scorecard checks are not sent to Google.
+
+**M8 delivers:** the offline cache (the last *Must* feature). History, saved checks, reports, the map list and the profile are saved on the phone (AsyncStorage) and open without a connection. An **offline banner** (icon + text) shows on every screen. Screens with nothing saved yet say so instead of looking empty. The **Check** tab works fully offline: a check made offline says it will be saved, and it is sent to History automatically when the connection returns, even after the app is closed and reopened. Other changes (creating, editing or deleting a report) fail straight away with "Could not connect" and a retry, instead of waiting. The Google Safe Browsing lookup is skipped offline and the result says only on-phone checks were used.
+
+- **Privacy:** each user's cache is stored under its own key and **deleted when they sign out**, so on a shared phone the next person can't see it. Saved data expires after 7 days. Google answers and the status check are never saved.
+- Connection state comes from `expo-network`, wired into TanStack Query's `onlineManager` (`src/services/offline-cache.ts`).
 
 **M6 delivers:** the Map tab. Approved reports with a location appear as markers (reports at the same rounded spot are grouped, with a count). Tapping a marker lists those reports; each opens its detail. **Show my area** centres the map on the user's approximate location (with permission handling). A **Places** list under the map gives the same information without the map, for screen readers.
 
@@ -54,7 +71,7 @@ The map is [Leaflet](https://leafletjs.com) with [OpenStreetMap](https://www.ope
 
 ## Tech stack
 
-Expo SDK 58 · Expo Router · TypeScript · Supabase (Auth, Postgres with Row Level Security, Storage) · TanStack Query · react-hook-form + zod · AsyncStorage · EAS Build.
+Expo SDK 58 · Expo Router · TypeScript · NativeWind 4 (Tailwind CSS 3) · Supabase (Auth, Postgres with Row Level Security, Storage) · TanStack Query · react-hook-form + zod · AsyncStorage · EAS Build.
 
 ## Getting started
 
@@ -86,6 +103,16 @@ In the Supabase dashboard:
 2. **Authentication → Sign In / Providers → Email:** keep *Confirm email* on for real use. While developing you can turn it off to sign in straight after registering.
 3. Supabase's built-in email sender is limited to a few emails per hour. That's fine for testing; set up custom SMTP before a demo with many users.
 
+### Sign-up emails
+
+- **Already registered:** sign-up says "An account with this email already exists" instead of a vague error. This was a deliberate choice: people were left waiting for an email that Supabase never sends for an existing account. The trade-off is that someone could use the form to test whether an email has an account. Sign-in and password reset still don't reveal it.
+- **Resend:** after registering, and on the sign-in screen when an email isn't confirmed yet, a **Resend confirmation email** button counts down before it can be used again.
+- **Limits are set by Supabase, not the app.** With the built-in email sender, Supabase sends at most **2 emails per hour for the whole project**, and waits **60 seconds** between emails to the same address. To resend faster:
+  1. Set up your own email sender: **Authentication → Emails → SMTP Settings** (e.g. Resend, Brevo or SendGrid; most have a free plan).
+  2. Lower the per-user wait under **Authentication → Rate Limits**.
+  3. Set `RESEND_COOLDOWN_SECONDS` in `src/utils/auth-errors.ts` to the same number, so the button's countdown matches.
+- **Confirmation link:** set **Authentication → URL Configuration → Site URL** to where the app runs (e.g. `http://localhost:8081` while developing). Otherwise the link opens `localhost:3000` and shows "can't be reached", although the email is already confirmed by then.
+
 ### 4. Create the database
 
 Open **SQL Editor** in the Supabase dashboard, paste the contents of
@@ -93,7 +120,24 @@ Open **SQL Editor** in the Supabase dashboard, paste the contents of
 
 Users who signed up **before** you ran the migration have no profile row. Delete those test users (Authentication → Users) and sign up again.
 
-### 5. Configure environment variables
+### 5. Set up Google Safe Browsing (Edge Function)
+
+1. In the [Google Cloud console](https://console.cloud.google.com/), create a project, enable the **Safe Browsing API**, then go to **APIs & Services → Credentials → Create credentials → API key**. Restrict the key to the *Safe Browsing API*.
+2. Deploy the function and store the key as a **function secret** (never in `.env`):
+
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase functions deploy safe-browsing
+   npx supabase secrets set GOOGLE_SAFE_BROWSING_API_KEY=<your Google key>
+   ```
+
+   You can also add the secret in the dashboard: **Edge Functions → Secrets**.
+3. To try it, check the link `http://testsafebrowsing.appspot.com/s/phishing.html`. It is a test page Google provides for this, so it should come back as listed.
+
+Without this step the app still works. Link checks show "Google Safe Browsing is not set up yet" and use only the on-phone checks. For local function development, copy `supabase/functions/.env.example` to `supabase/functions/.env` (gitignored).
+
+### 6. Configure environment variables
 
 ```bash
 cp .env.example .env     # Windows PowerShell: Copy-Item .env.example .env
@@ -109,7 +153,7 @@ EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your publishable key>
 - `.env` is gitignored. Only `.env.example` (placeholders) is committed.
 - `EXPO_PUBLIC_*` values are bundled into the app, so they must be public. **Never** put the secret / service-role key or the database password in the app. Server-only secrets, such as the Google Safe Browsing API key, live in Supabase Edge Function secrets.
 
-### 6. Run
+### 7. Run
 
 ```bash
 npx expo start           # press a (Android), w (web), or scan the QR code with Expo Go
@@ -171,7 +215,9 @@ Known brands and their official domains are in `src/utils/risk/known-brands.ts`.
 
 **Scheme scorecard** (`scheme-scorecard.ts`): 10 yes/no questions. Each "yes" is an indicator. Asking for a recovery phrase, PIN or password (50) is high on its own; guaranteed returns, withdrawal fees and remote-access apps are 30 each.
 
-**Wording:** a unit test fails if any result text says "safe", "legit", "is a scam" or "not a scam".
+**Google Safe Browsing** (`src/utils/safe-browsing.ts`): a listing on Google's lists of phishing, malware, unwanted software or harmful apps adds **60**. "Not listed" and "couldn't check" are notes (0).
+
+**Wording:** a unit test fails if any result text says "safe", "legit", "is a scam" or "not a scam". The only exception is the product name "Google Safe Browsing".
 
 ## Builds (EAS)
 
@@ -212,8 +258,10 @@ src/
   utils/                Pure helpers (env + form validation, error messages) + unit tests
     risk/               Offline risk check: link rules, lookalikes, scheme scorecard, scoring
 supabase/
+  functions/
+    safe-browsing/      Edge Function (Deno): Google Safe Browsing lookup; logic.ts is unit-tested
   migrations/           SQL to run in your Supabase project
-  tests/                Database / RLS tests (npm run test:db)
+  tests/                Database / RLS tests (npm run test:db), function tests (npm run test:functions)
 ```
 
 ### Architecture rules
@@ -223,6 +271,7 @@ supabase/
 - **Wording:** results say "risk indicators" or "no known warnings found", never "safe" or "this is a scam". Risk colors are always shown with a text label.
 - **Reports** describe schemes and platforms, never named individuals.
 - **Row Level Security:** every user-owned table restricts rows to `user_id = auth.uid()`.
+- **Styling:** use NativeWind `className`s, not `StyleSheet`. The colors (`bg-surface`, `text-primary`, `border-danger`…), spacing (`gap-md`, `p-lg`), radius (`rounded-md`) and text sizes (`text-heading`, `text-small-bold`) come from `src/theme`, so light and dark mode switch automatically. Keep `style` only for values known at runtime (safe-area insets, a score's width, a risk level's color), and `useTheme()` only for props that need a raw color (icons, `ActivityIndicator`, navigator options). Write full class names (`cn(isOn && 'bg-primary')`), never build them from strings, or Tailwind won't find them.
 
 ## Scripts
 
@@ -231,6 +280,7 @@ supabase/
 | `npm start` | Start the Expo dev server |
 | `npm test` | Run unit tests (Jest) |
 | `npm run test:db` | Run database / Row Level Security tests (PGlite) |
+| `npm run test:functions` | Run Edge Function logic tests (Node) |
 | `npm run typecheck` | TypeScript check |
 | `npx eslint .` | Lint |
 
@@ -250,6 +300,11 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 - **What AI did in M1:** wrote the auth service, session context, auth hooks, form schemas, the auth and tab screens, and the unit tests (48 in total). It also found and fixed two bugs during browser testing: opening the app signed out showed an "Unmatched Route" page, and the tab labels were clipped.
 - **How M1 was checked:** TypeScript, ESLint and Jest pass. Every screen was driven in a browser at phone size: 14 checks without Supabase configured (route protection, validation, error states), and 16 checks for sign-in, sign-out, register, password reset and session persistence against a simulated Supabase Auth API. **Not yet tested against a real Supabase project or on a physical phone.**
 
+- **NativeWind (after M8):** AI checked that the stable NativeWind 4.2.7 builds on Expo SDK 58 (it only officially lists SDK 57; NativeWind 5 is still a release candidate), then moved all 31 styled files from `StyleSheet` to classes. The look is unchanged: the same colors, sizes and dark mode, read from `src/theme` through CSS variables. A test fails if `tailwind.config.js` or `global.css` stop matching `src/theme`. **Checked:** TypeScript, ESLint, 313 tests, and web and Android bundles build with every class present in the generated CSS. **Not yet checked by eye** in a browser or on a phone.
+- **What AI did in M8:** read the TanStack Query persistence and Expo SDK 58 `expo-network` docs, then wrote the per-user persisted cache, the online/offline wiring, the queued offline save of checks, the offline banner and "offline, nothing saved yet" state, and 14 new tests that use the real TanStack Query and persister (restore after restart, per-user separation, delete on sign-out, Google answers not saved, offline save resumed after a restart, other changes failing fast). Breaking the offline-save setting on purpose made a test fail.
+- **How M8 was checked:** 296 unit tests, 35 database tests, 12 function tests, TypeScript, ESLint and `expo-doctor` pass. **Not yet tested in a browser or on a phone** (airplane mode on and off). Jest sometimes prints a "worker failed to exit" warning in the full run; every test still passes.
+- **What AI did in M7:** read the current Google Safe Browsing and Supabase Edge Function docs, then wrote the `safe-browsing` Edge Function (input checks, the Google request, a reply that contains only "listed / not listed" and the threat types), the app service and hook, merging Google's answer into the score, the result-screen states, and 34 new tests (22 Jest, 12 Node). The weight of 60 for a Google listing was proposed by AI and **should be reviewed by me**. The wording test was changed to allow the product name "Safe Browsing" (the first version also flagged the function's name, `safe-browsing`).
+- **How M7 was checked:** 282 unit tests, 35 database tests, 12 function tests, TypeScript and ESLint pass. The real `supabase-js` client was run against a simulated Supabase to confirm how function errors arrive (404 not deployed, 502 from Google, no connection) and that the user's sign-in token is sent. **Not yet tested:** the deployed function with a real Google key, and the result screen in a browser or on a phone (the Chrome extension wasn't connected during this milestone).
 - **What AI did in M6:** wrote the map page builder (Leaflet + OpenStreetMap), the grouping of reports by location, the WebView and iframe map components, the Map tab with the selected-place panel, "Show my area" and the Places list, and 19 new unit tests. Choice of OpenStreetMap over Google Maps was made by me after AI explained the API-key and billing trade-off. Testing found and fixed: a cache key collision that would have crashed deleting a report, and a race on fast (cached) loads where the map missed its "ready" signal so it wouldn't zoom.
 - **How M6 was checked:** 260 unit tests, 35 database tests, TypeScript and ESLint pass. The Map tab was driven in a browser (22 checks, run twice including a cached run) with real Leaflet and real OpenStreetMap tiles: markers grouped correctly, pending and location-less reports excluded, no report text in the map page, marker tap → panel → report, list → zoom, "Show my area" with allowed and refused location, empty and error states. **Not yet tested inside the Android/iOS WebView on a real phone.**
 - **What AI did in M5:** wrote the reports and location services, report hooks, the report form (with phone/email blocking and the location picker), the Reports tab, report detail and edit screens, and 41 new unit tests. A unit test caught a bug in the location fallback (an error skipped the last-known position) before it reached the app. The scheme types, platform list and personal-details rules **should be reviewed by me** against real PNG reports.

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ComponentType, type Ref } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { WebView as RNWebView, type WebViewMessageEvent, type WebViewProps } from 'react-native-webview';
 import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
 
@@ -44,7 +44,7 @@ export function ReportMap({ places, dark, focus, onSelect }: ReportMapProps) {
   };
 
   return (
-    <View style={styles.container} accessibilityLabel="Map of approved scam reports. The same places are listed below the map.">
+    <View className="flex-1 overflow-hidden" accessibilityLabel="Map of approved scam reports. The same places are listed below the map.">
       <WebView
         ref={ref}
         source={{ html, baseUrl: BASE_URL }}
@@ -61,19 +61,8 @@ export function ReportMap({ places, dark, focus, onSelect }: ReportMapProps) {
           if (/^https?:/.test(request.url)) Linking.openURL(request.url);
           return false;
         }}
-        style={styles.webview}
+        className="flex-1 bg-transparent"
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  webview: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-});

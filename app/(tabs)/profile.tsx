@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
@@ -14,13 +14,11 @@ import { useAuth } from '@/context/auth-provider';
 import { useSignOut } from '@/hooks/use-auth-actions';
 import { useMyProfile, useUpdateDisplayName } from '@/hooks/use-profile';
 import { useSupabaseHealth } from '@/hooks/use-supabase-health';
-import { useTheme } from '@/hooks/use-theme';
-import { radius, riskColors, spacing } from '@/theme';
 import type { Profile } from '@/types/database';
 import { editProfileSchema, type EditProfileForm } from '@/utils/auth-validation';
+import { isOfflineWithoutData } from '@/utils/offline';
 
 export default function ProfileScreen() {
-  const theme = useTheme();
   const { user } = useAuth();
   const profile = useMyProfile();
   const signOut = useSignOut();
@@ -30,10 +28,11 @@ export default function ProfileScreen() {
     <Screen>
       <ThemedText variant="title">Profile</ThemedText>
 
-      <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <View className="border rounded-md p-md gap-md bg-surface border-border">
         <AsyncState
           isLoading={profile.isLoading}
           error={profile.error}
+          isOffline={isOfflineWithoutData(profile)}
           isEmpty={profile.isSuccess && !profile.data}
           loadingMessage="Loading your profile…"
           emptyTitle="Profile not found"
@@ -49,7 +48,7 @@ export default function ProfileScreen() {
       {/* After sign-out, protected routes move to the login screen. */}
       <Button label="Sign out" variant="secondary" onPress={() => signOut.mutate()} loading={signOut.isPending} />
 
-      <View style={styles.section}>
+      <View className="gap-md">
         <ThemedText variant="heading">App status</ThemedText>
         <AsyncState
           isLoading={health.isLoading}
@@ -60,8 +59,8 @@ export default function ProfileScreen() {
           onRetry={() => health.refetch()}
           isRetrying={health.isFetching}>
           {health.data && (
-            <View style={styles.statusRow} accessibilityLabel="Connected to Supabase">
-              <View style={[styles.dot, { backgroundColor: riskColors.none }]} />
+            <View className="flex-row items-center gap-sm" accessibilityLabel="Connected to Supabase">
+              <View className="h-3 w-3 rounded-pill bg-risk-none" />
               <ThemedText>Connected to Supabase</ThemedText>
             </View>
           )}
@@ -88,7 +87,7 @@ function DisplayName({ profile }: { profile: Profile }) {
 
   if (!editing) {
     return (
-      <View style={styles.rowWithAction}>
+      <View className="flex-row items-center justify-between gap-md">
         <Row label="Display name" value={profile.display_name} />
         <Button
           label="Edit"
@@ -104,7 +103,7 @@ function DisplayName({ profile }: { profile: Profile }) {
   }
 
   return (
-    <View style={styles.editForm}>
+    <View className="gap-md">
       <TextField
         control={control}
         name="displayName"
@@ -116,7 +115,7 @@ function DisplayName({ profile }: { profile: Profile }) {
         onSubmitEditing={() => save()}
       />
       {update.error && <FormMessage tone="error" message={update.error.message} />}
-      <View style={styles.buttons}>
+      <View className="flex-row gap-sm">
         <Button label="Save" onPress={save} loading={update.isPending} />
         <Button label="Cancel" variant="secondary" onPress={() => setEditing(false)} disabled={update.isPending} />
       </View>
@@ -126,7 +125,7 @@ function DisplayName({ profile }: { profile: Profile }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.row}>
+    <View className="gap-xs shrink">
       <ThemedText variant="small" color="textSecondary">
         {label}
       </ThemedText>
@@ -136,42 +135,3 @@ function Row({ label, value }: { label: string; value: string }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  row: {
-    gap: spacing.xs,
-    flexShrink: 1,
-  },
-  rowWithAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  editForm: {
-    gap: spacing.md,
-  },
-  buttons: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  section: {
-    gap: spacing.md,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-});

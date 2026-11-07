@@ -1,8 +1,7 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
+import { cn } from '@/utils/cn';
 
 /** A pill-shaped toggle for picking one option (mode switches, yes/no answers). */
 export function ChoiceChip({
@@ -16,7 +15,6 @@ export function ChoiceChip({
   onPress: () => void;
   accessibilityLabel?: string;
 }) {
-  const theme = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -24,31 +22,13 @@ export function ChoiceChip({
       accessibilityState={{ checked: selected }}
       accessibilityLabel={accessibilityLabel ?? label}
       hitSlop={4}
-      style={({ pressed }) => [
-        styles.chip,
-        {
-          backgroundColor: selected ? theme.primary : theme.surface,
-          borderColor: selected ? theme.primary : theme.border,
-        },
-        pressed && styles.pressed,
-      ]}>
-      <ThemedText variant="smallBold" style={{ color: selected ? theme.onPrimary : theme.text }}>
+      className={cn(
+        'min-h-10 items-center justify-center rounded-pill border px-md active:opacity-70',
+        selected ? 'border-primary bg-primary' : 'border-border bg-surface'
+      )}>
+      <ThemedText variant="smallBold" color={selected ? 'onPrimary' : 'text'}>
         {label}
       </ThemedText>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  chip: {
-    minHeight: 40,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-});

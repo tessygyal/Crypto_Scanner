@@ -2,6 +2,7 @@ import {
   getSession,
   onSessionChange,
   requestPasswordReset,
+  resendConfirmation,
   resetPasswordWithCode,
   signIn,
   signOut,
@@ -13,6 +14,7 @@ const mockAuth = {
   signInWithPassword: jest.fn(),
   signUp: jest.fn(),
   resetPasswordForEmail: jest.fn(),
+  resend: jest.fn(),
   verifyOtp: jest.fn(),
   updateUser: jest.fn(),
   signOut: jest.fn(),
@@ -87,6 +89,34 @@ describe('signUp', () => {
   it('reports when the user is signed in straight away', async () => {
     mockAuth.signUp.mockReturnValue(ok({ user: {}, session: { access_token: 't' } }));
     await expect(signUp(input)).resolves.toEqual({ needsEmailConfirmation: false });
+  });
+
+  it('says the email is already registered (confirm email on: user with no identities)', async () => {
+    mockAuth.signUp.mockReturnValue(ok({ user: { id: 'x', identities: [] }, session: null }));
+    await expect(signUp(input)).rejects.toMatchObject({ code: 'email_already_registered', message: expect.stringMatching(/already exists/) });
+  });
+
+  it('says the email is already registered (confirm email off: user_already_exists error)', async () => {
+    mockAuth.signUp.mockReturnValue(fail('user_already_exists'));
+    await expect(signUp(input)).rejects.toThrow(/already exists/);
+  });
+
+  it('a new user with an identity is not mistaken for an existing one', async () => {
+    mockAuth.signUp.mockReturnValue(ok({ user: { id: 'x', identities: [{ id: 'i' }] }, session: null }));
+    await expect(signUp(input)).resolves.toEqual({ needsEmailConfirmation: true });
+  });
+});
+
+describe('resendConfirmation', () => {
+  it('asks Supabase to resend the sign-up email', async () => {
+    mockAuth.resend.mockReturnValue(ok());
+    await resendConfirmation('a@b.co');
+    expect(mockAuth.resend).toHaveBeenCalledWith({ type: 'signup', email: 'a@b.co' });
+  });
+
+  it('turns the rate limit into a friendly message', async () => {
+    mockAuth.resend.mockReturnValue(fail('over_email_send_rate_limit'));
+    await expect(resendConfirmation('a@b.co')).rejects.toThrow(/wait a minute/);
   });
 });
 

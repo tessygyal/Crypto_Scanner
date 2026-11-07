@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {
   requestPasswordReset,
+  resendConfirmation,
   resetPasswordWithCode,
   signIn,
   signOut,
@@ -20,6 +21,10 @@ export function useSignIn() {
 
 export function useSignUp() {
   return useMutation({ mutationFn: signUp });
+}
+
+export function useResendConfirmation() {
+  return useMutation({ mutationFn: resendConfirmation });
 }
 
 export function useRequestPasswordReset() {

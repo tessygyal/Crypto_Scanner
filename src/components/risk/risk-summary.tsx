@@ -1,9 +1,8 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { RiskIcon } from '@/components/risk/risk-icon';
 import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { radius, riskColors, spacing } from '@/theme';
+import { riskColors } from '@/theme';
 import { LEVEL_COPY } from '@/utils/risk/scoring';
 import type { RiskLevel } from '@/utils/risk/types';
 
@@ -12,29 +11,30 @@ import type { RiskLevel } from '@/utils/risk/types';
  * color together, never color alone.
  */
 export function RiskSummary({ level, score }: { level: RiskLevel; score: number }) {
-  const theme = useTheme();
   const copy = LEVEL_COPY[level];
+  // The level color and the score change at runtime, so those stay as styles.
   const color = riskColors[level];
 
   return (
     <View
-      style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border, borderLeftColor: color }]}
+      className="gap-md rounded-md border border-l-[6px] border-border bg-surface p-md"
+      style={{ borderLeftColor: color }}
       accessibilityRole="summary"
       accessibilityLabel={`${copy.label}. Risk score ${score} out of 100. ${copy.summary}`}>
-      <View style={styles.header}>
+      <View className="flex-row items-center gap-sm">
         <RiskIcon level={level} size={32} />
-        <ThemedText variant="heading" style={styles.label}>
+        <ThemedText variant="heading" className="flex-1">
           {copy.label}
         </ThemedText>
       </View>
 
-      <View style={styles.meterRow}>
+      <View className="flex-row items-center gap-sm">
         <View
-          style={[styles.track, { backgroundColor: theme.surfaceSelected }]}
+          className="h-2 flex-1 overflow-hidden rounded-pill bg-surface-selected"
           importantForAccessibility="no-hide-descendants">
-          {score > 0 && <View style={[styles.fill, { width: `${score}%`, backgroundColor: color }]} />}
+          {score > 0 && <View className="h-full rounded-pill" style={{ width: `${score}%`, backgroundColor: color }} />}
         </View>
-        <ThemedText variant="smallBold" style={styles.scoreText}>
+        <ThemedText variant="smallBold" className="min-w-[52px] text-right tabular-nums">
           {score}/100
         </ThemedText>
       </View>
@@ -43,41 +43,3 @@ export function RiskSummary({ level, score }: { level: RiskLevel; score: number 
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderLeftWidth: 6,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  label: {
-    flex: 1,
-  },
-  meterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  track: {
-    flex: 1,
-    height: 8,
-    borderRadius: radius.pill,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
-    borderRadius: radius.pill,
-  },
-  scoreText: {
-    minWidth: 52,
-    textAlign: 'right',
-    fontVariant: ['tabular-nums'],
-  },
-});

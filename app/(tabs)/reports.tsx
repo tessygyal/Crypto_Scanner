@@ -1,17 +1,19 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AsyncState } from '@/components/async-state';
 import { Button } from '@/components/button';
 import { ChoiceChip } from '@/components/choice-chip';
+import { OfflineBanner } from '@/components/offline-banner';
 import { ReportRow } from '@/components/reports/report-row';
 import { ThemedText } from '@/components/themed-text';
 import { useReports } from '@/hooks/use-reports';
 import { useTheme } from '@/hooks/use-theme';
 import type { ReportScope } from '@/services/reports';
-import { maxContentWidth, spacing } from '@/theme';
+import { spacing } from '@/theme';
+import { isOfflineWithoutData } from '@/utils/offline';
 
 const EMPTY: Record<ReportScope, { title: string; message: string }> = {
   community: {
@@ -34,15 +36,14 @@ export default function ReportsScreen() {
 
   return (
     <FlatList
-      style={{ backgroundColor: theme.background }}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.xl },
-      ]}
+      className="bg-background"
+      contentContainerClassName="px-lg"
+      // Safe-area insets are only known at runtime, so they stay as a style.
+      contentContainerStyle={{ paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.xl }}
       data={reports.isSuccess ? items : []}
       keyExtractor={(r) => r.id}
       renderItem={({ item }) => (
-        <View style={styles.item}>
+        <View className="w-full max-w-content self-center mb-sm">
           <ReportRow
             report={item}
             showStatus={scope === 'mine'}
@@ -51,22 +52,24 @@ export default function ReportsScreen() {
         </View>
       )}
       ListHeaderComponent={
-        <View style={styles.header}>
+        <View className="w-full max-w-content self-center gap-md mb-md">
           <ThemedText variant="title">Reports</ThemedText>
           <ThemedText color="textSecondary">
             Scam schemes reported by people in PNG. Reports describe schemes and platforms, never named people.
           </ThemedText>
           <Button label="Report a scam scheme" onPress={() => router.push('/report/new')} fullWidth />
 
-          <View style={styles.tabs} accessibilityRole="radiogroup" accessibilityLabel="Which reports to show">
+          <View className="flex-row gap-sm" accessibilityRole="radiogroup" accessibilityLabel="Which reports to show">
             <ChoiceChip label="Community" selected={scope === 'community'} onPress={() => setScope('community')} />
             <ChoiceChip label="My reports" selected={scope === 'mine'} onPress={() => setScope('mine')} />
           </View>
 
+          <OfflineBanner />
           {!reports.isSuccess && (
             <AsyncState
               isLoading={reports.isLoading}
               error={reports.error}
+              isOffline={isOfflineWithoutData(reports)}
               loadingMessage="Loading reports…"
               onRetry={() => reports.refetch()}
               isRetrying={reports.isFetching}>
@@ -82,7 +85,7 @@ export default function ReportsScreen() {
       }
       ListFooterComponent={
         reports.hasNextPage || reports.isFetchingNextPage ? (
-          <View style={styles.footer}>
+          <View className="py-md items-center">
             {reports.isFetchingNextPage ? (
               <ActivityIndicator color={theme.textSecondary} accessibilityLabel="Loading more reports" />
             ) : (
@@ -107,31 +110,3 @@ export default function ReportsScreen() {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  // Cells stretch to the full width; each child is capped and centred.
-  content: {
-    paddingHorizontal: spacing.lg,
-  },
-  header: {
-    width: '100%',
-    maxWidth: maxContentWidth,
-    alignSelf: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-  tabs: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  item: {
-    width: '100%',
-    maxWidth: maxContentWidth,
-    alignSelf: 'center',
-    marginBottom: spacing.sm,
-  },
-  footer: {
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-});

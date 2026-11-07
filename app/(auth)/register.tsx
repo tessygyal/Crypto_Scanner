@@ -1,16 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ConfigNotice } from '@/components/config-notice';
 import { FormMessage } from '@/components/form/form-message';
+import { ResendConfirmation } from '@/components/form/resend-confirmation';
 import { TextField } from '@/components/form/text-field';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useSignUp } from '@/hooks/use-auth-actions';
-import { spacing } from '@/theme';
+import { FriendlyAuthError } from '@/utils/auth-errors';
 import { registerSchema, type RegisterForm } from '@/utils/auth-validation';
 
 export default function RegisterScreen() {
@@ -34,6 +35,7 @@ export default function RegisterScreen() {
           title="Check your email"
           message={`We sent a confirmation link to ${getValues('email')}. Open it on this phone, then come back and sign in.`}
         />
+        <ResendConfirmation email={signUp.variables?.email ?? getValues('email')} sentJustNow />
         <Link href="/login" replace>
           <ThemedText variant="bodyBold" color="primary">
             Back to sign in
@@ -51,7 +53,7 @@ export default function RegisterScreen() {
 
       <ConfigNotice />
 
-      <View style={styles.form}>
+      <View className="gap-md">
         <TextField
           control={control}
           name="displayName"
@@ -98,15 +100,16 @@ export default function RegisterScreen() {
         />
 
         {signUp.error && <FormMessage tone="error" message={signUp.error.message} />}
+        {signUp.error instanceof FriendlyAuthError && signUp.error.code === 'email_already_registered' && (
+          <Link href="/login" replace>
+            <ThemedText variant="bodyBold" color="primary">
+              Go to sign in
+            </ThemedText>
+          </Link>
+        )}
 
         <Button label="Create account" onPress={onSubmit} loading={signUp.isPending} fullWidth />
       </View>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  form: {
-    gap: spacing.md,
-  },
-});

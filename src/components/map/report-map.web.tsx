@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { buildMapHtml, focusMessage, parseMapMessage } from '@/utils/map';
 
@@ -32,7 +32,7 @@ export function ReportMap({ places, dark, focus, onSelect }: ReportMapProps) {
   }, [ready, focus]);
 
   return (
-    <View style={styles.container} accessibilityLabel="Map of approved scam reports. The same places are listed below the map.">
+    <View className="flex-1 overflow-hidden" accessibilityLabel="Map of approved scam reports. The same places are listed below the map.">
       <iframe
         ref={frame}
         title="Map of approved scam reports"
@@ -48,10 +48,3 @@ export function ReportMap({ places, dark, focus, onSelect }: ReportMapProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-});
