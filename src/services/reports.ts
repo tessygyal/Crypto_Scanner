@@ -3,6 +3,7 @@ import { FriendlyDbError } from '@/utils/db-errors';
 import type { ReportInput } from '@/utils/reports';
 
 import { db, run } from './db';
+import { listEvidencePaths, removeEvidenceFiles } from './evidence';
 
 /**
  * Community reports. RLS decides what each user can see: approved reports
@@ -70,9 +71,15 @@ export async function updateReport(id: string, input: ReportInput): Promise<Repo
   return rows[0];
 }
 
+/**
+ * Delete your own report. Its evidence rows go with it (on delete cascade);
+ * the screenshot files are then removed from Storage.
+ */
 export async function deleteReport(id: string): Promise<void> {
+  const paths = await listEvidencePaths(id);
   const rows = await run(db().from('reports').delete().eq('id', id).select('id'));
   if (rows.length === 0) throw new FriendlyDbError({ code: '23503', message: 'report not found' });
+  await removeEvidenceFiles(paths);
 }
 
 /** The most map markers we load at once (newest first). */

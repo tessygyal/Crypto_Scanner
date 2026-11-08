@@ -52,7 +52,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Scam Detector PNG reads a QR code from a screenshot you choose. The image stays on your phone.",
+          "photosPermission": "Scam Detector PNG reads a QR code from a screenshot you choose (that image stays on your phone), and lets you attach screenshots to your own scam reports. Attached screenshots are private to you and the moderators.",
           "cameraPermission": "Scam Detector PNG uses the camera to read QR codes so it can check the link inside before you open it. No photos are saved or uploaded.",
           "microphonePermission": false
         }

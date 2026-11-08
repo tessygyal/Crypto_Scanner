@@ -285,41 +285,71 @@ describe('evidence', () => {
 
   it('the report owner can attach a screenshot from their own folder', async () => {
     const r = await insertReport(A);
-    await addEvidence(A, r.id, `${A}/shot.jpg`);
+    await addEvidence(A, r.id, `${A}/${r.id}-shot.jpg`);
     assert.equal((await as(A, 'select * from public.evidence')).rows.length, 1);
   });
 
   it('cannot attach evidence to someone else’s report', async () => {
     const r = await insertReport(A);
-    await rejects(addEvidence(B, r.id, `${B}/shot.jpg`), RLS);
+    await rejects(addEvidence(B, r.id, `${B}/${r.id}-shot.jpg`), RLS);
   });
 
   it('cannot point evidence at another user’s file', async () => {
     const r = await insertReport(A);
-    await rejects(addEvidence(A, r.id, `${B}/shot.jpg`), RLS);
+    await rejects(addEvidence(A, r.id, `${B}/${r.id}-shot.jpg`), RLS);
   });
 
   it('stays private even when the report is approved', async () => {
     const r = await insertReport(A);
-    await addEvidence(A, r.id, `${A}/shot.jpg`);
+    await addEvidence(A, r.id, `${A}/${r.id}-shot.jpg`);
     await as('service_role', `update public.reports set status = 'approved' where id = $1`, [r.id]);
     assert.equal((await as(B, 'select * from public.evidence')).rows.length, 0);
   });
 
   it('is deleted with its report', async () => {
     const r = await insertReport(A);
-    await addEvidence(A, r.id, `${A}/shot.jpg`);
+    await addEvidence(A, r.id, `${A}/${r.id}-shot.jpg`);
     await as(A, 'delete from public.reports where id = $1', [r.id]);
     assert.equal((await db.query('select count(*)::int as n from public.evidence')).rows[0].n, 0);
   });
 
   it('rejects paths that are not "<user id>/<file>"', async () => {
     const r = await insertReport(A);
-    // As a user, RLS rejects these first...
-    await rejects(addEvidence(A, r.id, 'shot.jpg'), RLS);
-    // ...and the format check rejects them even for the service role, which skips RLS.
-    await rejects(addEvidence('service_role', r.id, 'shot.jpg'), /check constraint/);
-    await rejects(addEvidence('service_role', r.id, `${A}/nested/shot.jpg`), /check constraint/);
+    // Rejected for a user...
+    await rejects(addEvidence(A, r.id, 'shot.jpg'), /row-level security|start with the report id/);
+    // ...and even for the service role, which skips RLS.
+    await rejects(addEvidence('service_role', r.id, 'shot.jpg'), /check constraint|start with the report id/);
+    await rejects(addEvidence('service_role', r.id, `${A}/nested/shot.jpg`), /check constraint|start with the report id/);
+  });
+
+  it('the file name must start with the report id', async () => {
+    const r = await insertReport(A);
+    const other = await insertReport(A);
+    await rejects(addEvidence(A, r.id, `${A}/shot.jpg`), /start with the report id/);
+    // A file named for one report can't be attached to another.
+    await rejects(addEvidence(A, r.id, `${A}/${other.id}-shot.jpg`), /start with the report id/);
+  });
+
+  it('allows at most 3 screenshots per report', async () => {
+    const r = await insertReport(A);
+    for (const n of [1, 2, 3]) await addEvidence(A, r.id, `${A}/${r.id}-${n}.jpg`);
+    await rejects(addEvidence(A, r.id, `${A}/${r.id}-4.jpg`), /at most 3 screenshots/);
+    // The limit is per report.
+    const other = await insertReport(A);
+    await addEvidence(A, other.id, `${A}/${other.id}-1.jpg`);
+  });
+
+  it('the owner can delete a screenshot; others cannot', async () => {
+    const r = await insertReport(A);
+    await addEvidence(A, r.id, `${A}/${r.id}-shot.jpg`);
+    assert.equal((await as(B, 'delete from public.evidence')).affectedRows, 0);
+    assert.equal((await as(A, 'delete from public.evidence')).affectedRows, 1);
+  });
+
+  it('cannot be edited after it is attached', async () => {
+    const r = await insertReport(A);
+    await addEvidence(A, r.id, `${A}/${r.id}-shot.jpg`);
+    await rejects(as(A, `update public.evidence set storage_path = $1`, [`${A}/${r.id}-other.jpg`]), DENIED);
   });
 });
 
