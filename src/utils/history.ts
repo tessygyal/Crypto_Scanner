@@ -20,6 +20,7 @@ export function parseStoredSignals(json: Json): StoredSignal[] {
 /** Route and params to re-run a saved check with the current rules. */
 export function rerunParams(check: Pick<CheckRow, 'type' | 'input' | 'signals'>):
   | { type: 'url'; input: string }
+  | { type: 'token'; input: string }
   | { type: 'scheme'; answers: string }
   | null {
   if (check.type === 'url' || check.type === 'qr') return { type: 'url', input: check.input };
@@ -28,7 +29,8 @@ export function rerunParams(check: Pick<CheckRow, 'type' | 'input' | 'signals'>)
     const answers = cleanSchemeAnswers(parseStoredSignals(check.signals).map((s) => s.id));
     return { type: 'scheme', answers: answers.join(',') };
   }
-  return null; // token checks arrive in a later milestone
+  if (check.type === 'token') return { type: 'token', input: check.input };
+  return null;
 }
 
 export const CHECK_TYPE_LABEL: Record<CheckRow['type'], string> = {

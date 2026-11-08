@@ -65,7 +65,7 @@
     "test:watch": "jest --watchAll",
     "typecheck": "tsc --noEmit",
     "test:db": "node --test supabase/tests/rls.test.mjs",
-    "test:functions": "node --test supabase/tests/safe-browsing.test.mjs"
+    "test:functions": "node --test supabase/tests/safe-browsing.test.mjs supabase/tests/token-lookup.test.mjs"
   },
   "private": true,
   "jest": {

@@ -13,6 +13,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useSafeBrowsing } from '@/hooks/use-safe-browsing';
 import { useSaveCheck } from '@/hooks/use-save-check';
+import { useTokenLookup } from '@/hooks/use-token-lookup';
 import { useTheme } from '@/hooks/use-theme';
 import { SAVE_QUEUED_MESSAGE } from '@/utils/offline';
 import { analyzeScheme, cleanSchemeAnswers } from '@/utils/risk/scheme-scorecard';
@@ -20,6 +21,7 @@ import { LEVEL_COPY } from '@/utils/risk/scoring';
 import type { RiskResult } from '@/utils/risk/types';
 import { analyzeUrl } from '@/utils/risk/url-analysis';
 import { safeBrowsingTarget, withSafeBrowsing } from '@/utils/safe-browsing';
+import { checkTokenInput, tokenResult } from '@/utils/token';
 
 type Params = { type?: string; input?: string; answers?: string; source?: string };
 
@@ -38,6 +40,59 @@ function resultFromParams(params: Params): { result: RiskResult } | { error: str
 
 export default function CheckResultScreen() {
   const params = useLocalSearchParams<Params>();
+  if (params.type === 'token') return <TokenCheckResult input={params.input ?? ''} />;
+  return <LinkOrOfferResult params={params} />;
+}
+
+/** Token checks need CoinGecko: there is no offline part, so wait for it (with retry). */
+function TokenCheckResult({ input }: { input: string }) {
+  const valid = checkTokenInput(input);
+  const lookup = useTokenLookup(valid.ok ? input.trim() : null);
+  const result = useMemo(() => (lookup.data ? tokenResult(input, lookup.data) : null), [input, lookup.data]);
+
+  if (!valid.ok) {
+    return (
+      <Screen hasHeader>
+        <FormMessage tone="error" message={valid.error} />
+        <Button label="Back to Check" onPress={() => router.back()} />
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen hasHeader>
+      <View className="gap-xs">
+        <ThemedText variant="small" color="textSecondary">
+          {valid.kind === 'address' ? 'Token contract address checked' : 'Token checked'}
+        </ThemedText>
+        <ThemedText variant="bodyBold" selectable>
+          {input.trim()}
+        </ThemedText>
+      </View>
+
+      <AsyncState
+        isLoading={lookup.isPending}
+        error={lookup.error}
+        loadingMessage="Looking it up on CoinGecko…"
+        onRetry={() => lookup.refetch()}
+        isRetrying={lookup.isFetching}>
+        {result && (
+          <>
+            <ThemedText variant="small" color="textSecondary">
+              Market data from CoinGecko. Prices change quickly — this is how it looked just now.
+            </ThemedText>
+            <ResultDetails result={result} />
+          </>
+        )}
+      </AsyncState>
+
+      <Button label="Check something else" variant="secondary" onPress={() => router.back()} fullWidth />
+      <Disclaimer />
+    </Screen>
+  );
+}
+
+function LinkOrOfferResult({ params }: { params: Params }) {
   const outcome = useMemo(() => resultFromParams(params), [params]);
 
   // Links are also looked up in Google Safe Browsing (via our Edge Function).
@@ -63,7 +118,6 @@ export default function CheckResultScreen() {
 
   // Wait for Google before showing the level, so it doesn't change while being read.
   const settled = target === null || google.isSuccess || google.isError;
-  const indicators = result.signals.filter((s) => s.weight > 0);
 
   return (
     <Screen hasHeader>
@@ -94,41 +148,47 @@ export default function CheckResultScreen() {
         </ThemedText>
       )}
 
-      {settled && (
-        <>
-          <RiskSummary level={result.level} score={result.score} />
-
-          {result.signals.length > 0 && (
-            <View className="gap-md">
-              <ThemedText variant="heading">
-                {indicators.length === 0
-                  ? 'Notes'
-                  : indicators.length === 1
-                    ? '1 risk indicator'
-                    : `${indicators.length} risk indicators`}
-              </ThemedText>
-              <SignalList signals={result.signals} />
-            </View>
-          )}
-
-          <View className="gap-md">
-            <ThemedText variant="heading">What to do</ThemedText>
-            {LEVEL_COPY[result.level].advice.map((tip) => (
-              <View key={tip} className="flex-row gap-sm">
-                <ThemedText>•</ThemedText>
-                <ThemedText className="flex-1">{tip}</ThemedText>
-              </View>
-            ))}
-          </View>
-
-          <SaveStatus result={result} />
-        </>
-      )}
+      {settled && <ResultDetails result={result} />}
 
       <Button label="Check something else" variant="secondary" onPress={() => router.back()} fullWidth />
 
       <Disclaimer />
     </Screen>
+  );
+}
+
+/** Level, indicators, advice and saving — the same for every kind of check. */
+function ResultDetails({ result }: { result: RiskResult }) {
+  const indicators = result.signals.filter((s) => s.weight > 0);
+  return (
+    <>
+      <RiskSummary level={result.level} score={result.score} />
+
+      {result.signals.length > 0 && (
+        <View className="gap-md">
+          <ThemedText variant="heading">
+            {indicators.length === 0
+              ? 'Notes'
+              : indicators.length === 1
+                ? '1 risk indicator'
+                : `${indicators.length} risk indicators`}
+          </ThemedText>
+          <SignalList signals={result.signals} />
+        </View>
+      )}
+
+      <View className="gap-md">
+        <ThemedText variant="heading">What to do</ThemedText>
+        {LEVEL_COPY[result.level].advice.map((tip) => (
+          <View key={tip} className="flex-row gap-sm">
+            <ThemedText>•</ThemedText>
+            <ThemedText className="flex-1">{tip}</ThemedText>
+          </View>
+        ))}
+      </View>
+
+      <SaveStatus result={result} />
+    </>
   );
 }
 
