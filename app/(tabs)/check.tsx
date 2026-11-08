@@ -13,9 +13,10 @@ import { TextField } from '@/components/form/text-field';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { SCHEME_QUESTIONS } from '@/utils/risk/scheme-scorecard';
+import { checkTokenInput } from '@/utils/token';
 import { analyzeUrl } from '@/utils/risk/url-analysis';
 
-type Mode = 'link' | 'scheme';
+type Mode = 'link' | 'token' | 'scheme';
 
 const linkSchema = z.object({
   url: z.string().trim().min(1, 'Paste a link to check.').max(2048, 'That link is too long to check.'),
@@ -33,14 +34,15 @@ export default function CheckScreen() {
       hero={{
         icon: 'shield-checkmark',
         title: 'Check before you pay',
-        subtitle: 'Check a link you were sent, or answer a few questions about an offer.',
+        subtitle: 'Check a link or a crypto token you were sent, or answer a few questions about an offer.',
       }}>
       <View className="flex-row gap-sm" accessibilityRole="radiogroup" accessibilityLabel="What do you want to check?">
         <ChoiceChip label="Link" selected={mode === 'link'} onPress={() => setMode('link')} />
+        <ChoiceChip label="Token" selected={mode === 'token'} onPress={() => setMode('token')} />
         <ChoiceChip label="Offer questions" selected={mode === 'scheme'} onPress={() => setMode('scheme')} />
       </View>
 
-      {mode === 'link' ? <LinkCheck /> : <SchemeCheck />}
+      {mode === 'link' ? <LinkCheck /> : mode === 'token' ? <TokenCheck /> : <SchemeCheck />}
 
       <Disclaimer />
     </Screen>
@@ -96,6 +98,49 @@ function LinkCheck() {
           </Pressable>
         ))}
       </View>
+    </View>
+  );
+}
+
+const tokenSchema = z.object({
+  token: z.string().superRefine((value, ctx) => {
+    const checked = checkTokenInput(value);
+    if (!checked.ok) ctx.addIssue({ code: 'custom', message: checked.error });
+  }),
+});
+type TokenForm = z.infer<typeof tokenSchema>;
+
+function TokenCheck() {
+  const { control, handleSubmit } = useForm<TokenForm>({
+    resolver: zodResolver(tokenSchema),
+    defaultValues: { token: '' },
+  });
+
+  const onSubmit = handleSubmit(({ token }) => {
+    router.push({ pathname: '/check-result', params: { type: 'token', input: token.trim() } });
+  });
+
+  return (
+    <View className="gap-md">
+      <TextField
+        control={control}
+        name="token"
+        label="Token name, symbol or contract address"
+        placeholder="e.g. USDT, or 0x…"
+        hint="Looked up on CoinGecko, a crypto price tracker. A contract address is more reliable than a name, which anyone can copy."
+        autoComplete="off"
+        returnKeyType="search"
+        maxLength={100}
+        onSubmitEditing={() => onSubmit()}
+      />
+      <Button label="Check token" onPress={onSubmit} fullWidth />
+      <Card className="gap-xs">
+        <ThemedText variant="smallBold">Where to find the contract address</ThemedText>
+        <ThemedText variant="small" color="textSecondary">
+          Ask the person promoting the token, or look in the token&apos;s details in your wallet app. It starts with
+          &quot;0x&quot; (Ethereum, BNB Chain, Polygon, Base), &quot;T&quot; (Tron), or is a long code (Solana).
+        </ThemedText>
+      </Card>
     </View>
   );
 }

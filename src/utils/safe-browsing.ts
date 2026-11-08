@@ -1,4 +1,5 @@
 import { NETWORK_ERROR_MESSAGE } from '@/utils/auth-errors';
+import type { FunctionFailure } from '@/utils/function-errors';
 import { scoreSignals } from '@/utils/risk/scoring';
 import type { RiskResult, Signal } from '@/utils/risk/types';
 
@@ -70,11 +71,7 @@ export const SAFE_BROWSING_NOT_SET_UP_MESSAGE =
   'Google Safe Browsing is not set up yet. Deploy the safe-browsing Edge Function and set its API key (see README).';
 
 /** A failed call, reduced to what we need to pick a message. */
-export type SafeBrowsingFailure =
-  | { kind: 'http'; status: number; code?: string }
-  | { kind: 'network' }
-  | { kind: 'not_configured_app' }
-  | { kind: 'other' };
+export type SafeBrowsingFailure = FunctionFailure;
 
 /** A plain-language message for a failed lookup. Raw server text is never shown. */
 export function safeBrowsingErrorMessage(failure: SafeBrowsingFailure): string {

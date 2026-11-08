@@ -56,8 +56,8 @@ describe('rerunParams', () => {
     ).toEqual({ type: 'scheme', answers: 'guaranteed_returns,pressure' });
   });
 
-  it('cannot re-run token checks yet', () => {
-    expect(rerunParams({ type: 'token', input: 'PEPE', signals: [] })).toBeNull();
+  it('re-runs a token check with its original input (fresh CoinGecko data)', () => {
+    expect(rerunParams({ type: 'token', input: 'PEPE', signals: [] })).toEqual({ type: 'token', input: 'PEPE' });
   });
 });
 

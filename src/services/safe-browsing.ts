@@ -1,5 +1,3 @@
-import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from '@supabase/supabase-js';
-
 import {
   parseSafeBrowsingAnswer,
   safeBrowsingErrorMessage,
@@ -7,6 +5,7 @@ import {
   type SafeBrowsingFailure,
 } from '@/utils/safe-browsing';
 
+import { describeFunctionFailure as describeFailure } from './edge-function';
 import { supabase } from './supabase';
 
 /** An Error whose message is already safe to show to the user. */
@@ -16,23 +15,6 @@ export class SafeBrowsingError extends Error {
     this.name = 'SafeBrowsingError';
     this.cause = cause;
   }
-}
-
-async function describeFailure(error: unknown): Promise<SafeBrowsingFailure> {
-  if (error instanceof FunctionsHttpError) {
-    const response = error.context as Response | undefined;
-    let code: string | undefined;
-    try {
-      const body = await response?.json();
-      if (typeof body?.error?.code === 'string') code = body.error.code;
-    } catch {
-      // Not JSON (e.g. the gateway's own error page) — the status is enough.
-    }
-    return { kind: 'http', status: response?.status ?? 500, code };
-  }
-  if (error instanceof FunctionsFetchError) return { kind: 'network' };
-  if (error instanceof FunctionsRelayError) return { kind: 'http', status: 502 };
-  return { kind: 'other' };
 }
 
 /**

@@ -20,11 +20,26 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 | **QR scan (Should)** | ✅ Done (camera or screenshot; links go through the normal check) |
 | **Screenshot evidence (Should)** | ✅ Done (up to 3 private screenshots per report) |
 | **In-app moderation (Should)** | ✅ Done (moderators approve or reject in the app, with a note to the reporter) |
-| Not built | CoinGecko token lookup and the *Could* features (see [Known limitations](#known-limitations)) |
+| **CoinGecko token lookup (Should)** | ✅ Done (name, symbol or contract address; Edge Function, key stays on the server) |
+| Not built | The *Could* features (see [Known limitations](#known-limitations)) |
 
 **QR scan delivers:** a "Scan a QR code" button on the Check tab. The scan screen reads a QR code with the camera (`expo-camera`) or from a screenshot (`expo-image-picker`), because scam QR codes are often sent as images in chats. If the code holds a link, it goes straight to the normal link check (offline analysis + Google Safe Browsing) and the result says "Link from a QR code". Other codes are explained, never judged: crypto payment requests (with the coin and amount, and a warning that crypto payments can't be reversed), Wi-Fi networks, phone/SMS/email codes, and plain text. Nothing is opened or paid, and images stay on the phone. The camera asks only for camera access (no microphone).
 
 **Screenshot evidence delivers:** a **Screenshots (private)** section on your own report's screen. You can add up to 3 screenshots (JPEG, PNG or WebP, max 5 MB) and remove them. They go to the private `evidence` Storage bucket and are shown with links that expire after an hour. Only you and the moderators can see them, never the community, because chat screenshots often show names, faces and phone numbers. The app asks you to crop those out first. Images are re-saved at 70% quality to keep uploads small. The type is checked from the file's first bytes, not its name. Deleting a report also deletes its screenshot files. A new migration (`20261108000000_report_evidence.sql`) makes the database enforce the 3-screenshot limit. It also requires each file name to start with its report's id, so a file can't be attached to a different report. Uploads need a connection: offline they fail straight away with "Could not connect" and a retry.
+
+**CoinGecko token lookup delivers:** a **Token** option on the Check tab. Type a token's name or symbol (e.g. `USDT`), or paste a contract address: `0x…` (looked up on Ethereum, BNB Chain, Polygon and Base), Tron (`T…`) or Solana. The app sends it to the `token-lookup` Edge Function, which asks CoinGecko, so the CoinGecko key never reaches the app. The result uses the same levels, indicators, advice and History saving as other checks, and can be re-run from History with fresh data. Token checks need a connection: offline they show "Could not connect" with a retry. Market data is labelled "from CoinGecko", as CoinGecko's free plan asks.
+
+| Token indicator | Weight |
+|---|---|
+| Contract address not on CoinGecko | 35 |
+| No token with that exact name or symbol | 20 |
+| Very small market value (under $1 million) | 20 |
+| Market value unknown | 15 |
+| Very little trading (under $10,000 in 24 h) | 15 |
+| Price moved 50% or more in 24 h | 15 |
+| No market value rank | 10 |
+| 2+ listed tokens share the symbol (copycats; name searches only) | 10 |
+| Listed on CoinGecko (shown as a note, *not* proof it is trustworthy) | 0 |
 
 **In-app moderation delivers:** moderators get a **To review** list on the Reports tab, showing other people's pending reports oldest first. Opening a report shows its screenshots (read only) and a **Moderation** card with **Approve** / **Reject** and an optional note to the reporter (up to 300 characters). The reporter sees that note on their report, e.g. under "Why it wasn't approved". The Profile tab shows the moderator role. A new migration (`20261108010000_moderation.sql`) adds:
 
@@ -80,12 +95,13 @@ The map is [Leaflet](https://leafletjs.com) with [OpenStreetMap](https://www.ope
 
 - **Must:** auth, offline URL analysis, one external API (Google Safe Browsing via a backend function), report CRUD, map of reports, check history, offline cache.
 - **Must:** ✅ all done.
-- **Should:** ✅ QR scan, ✅ password reset, ✅ screenshot evidence, ✅ moderation (in the app). Not built: CoinGecko token lookup.
+- **Should:** ✅ all done: QR scan, password reset, screenshot evidence, moderation (in the app), CoinGecko token lookup.
 - **Could:** RDAP domain age, notifications, Tok Pisin. Not built.
 
 ## Known limitations
 
-- **Not built:** CoinGecko token lookup and the *Could* features.
+- **Not built:** the *Could* features (RDAP domain age, notifications, Tok Pisin).
+- **Token lookup only knows CoinGecko:** a token on another network, or one too new for CoinGecko, shows as "not listed". CoinGecko's free plan has a monthly call limit; when it is used up, token checks say CoinGecko is busy.
 - **Screenshots are only as private as the person makes them:** the app asks people to crop out names, faces and numbers, but it can't check the image itself. Moderators should reject a report whose screenshots identify people.
 - **Moderation needs people:** new reports stay *Pending review* until a moderator reviews them. Moderators are added by hand in the SQL Editor, and there are no notifications when new reports arrive.
 - **Emails:** Supabase's built-in email sender allows only about 2 sign-up/reset emails per hour. A real launch needs custom SMTP.
@@ -171,6 +187,19 @@ To remove them: `delete from public.moderators where user_id = (select id from a
 
 Without this step the app still works. Link checks show "Google Safe Browsing is not set up yet" and use only the on-phone checks. For local function development, copy `supabase/functions/.env.example` to `supabase/functions/.env` (gitignored).
 
+### 5b. Set up CoinGecko token lookup (Edge Function)
+
+1. Create a free **Demo** API key at [coingecko.com/en/api](https://www.coingecko.com/en/api) (Developer Dashboard).
+2. Deploy the function and store the key as a function secret (never in `.env`):
+
+   ```bash
+   npx supabase functions deploy token-lookup
+   npx supabase secrets set COINGECKO_API_KEY=<your CoinGecko demo key>
+   ```
+3. To try it, check the token `USDT` on the Check tab → Token.
+
+Without this step the app still works; token checks show "Token lookup is not set up yet".
+
 ### 6. Configure environment variables
 
 ```bash
@@ -185,7 +214,7 @@ EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your publishable key>
 ```
 
 - `.env` is gitignored. Only `.env.example` (placeholders) is committed.
-- `EXPO_PUBLIC_*` values are bundled into the app, so they must be public. **Never** put the secret / service-role key or the database password in the app. Server-only secrets, such as the Google Safe Browsing API key, live in Supabase Edge Function secrets.
+- `EXPO_PUBLIC_*` values are bundled into the app, so they must be public. **Never** put the secret / service-role key or the database password in the app. Server-only secrets, such as the Google Safe Browsing and CoinGecko API keys, live in Supabase Edge Function secrets.
 
 ### 7. Run
 
@@ -252,6 +281,8 @@ Known brands and their official domains are in `src/utils/risk/known-brands.ts`.
 
 **Google Safe Browsing** (`src/utils/safe-browsing.ts`): a listing on Google's lists of phishing, malware, unwanted software or harmful apps adds **60**. "Not listed" and "couldn't check" are notes (0).
 
+**Token lookup** (`src/utils/token.ts`): see the table under *CoinGecko token lookup delivers*.
+
 **Wording:** a unit test fails if any result text says "safe", "legit", "is a scam" or "not a scam". The only exception is the product name "Google Safe Browsing".
 
 ## Builds (EAS)
@@ -295,6 +326,7 @@ src/
 supabase/
   functions/
     safe-browsing/      Edge Function (Deno): Google Safe Browsing lookup; logic.ts is unit-tested
+    token-lookup/       Edge Function (Deno): CoinGecko token lookup; logic.ts is unit-tested
   migrations/           SQL to run in your Supabase project
   tests/                Database / RLS tests (npm run test:db), function tests (npm run test:functions)
 ```
@@ -337,7 +369,9 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 
 - **What AI did for screenshot evidence:** read the Expo SDK 58 `expo-image-picker` and `supabase-js` Storage docs and types, then wrote the migration (3-screenshot limit, file name tied to the report), the evidence service (upload with type and size checks, signed links, delete, clean-up when a report is deleted or a link fails), hooks, the Screenshots section, and 29 new tests (25 Jest, 4 database). Decision made with AI: screenshots stay private to the reporter and moderators, never shown to the community.
 - **How screenshot evidence was checked:** 360 unit tests, 39 database tests, 12 function tests, TypeScript and ESLint pass. **Not yet tested against the real Supabase Storage bucket or on a phone.**
-- **What AI did for in-app moderation:** wrote the migration (moderators table, `is_moderator()`, `moderate_report()`, review columns, read policies for moderators), the moderation service and hooks, the To review list, the Moderation card and the reporter's view of the note, and 22 new tests (10 Jest, 12 database). Design decisions made with AI: status changes go through one database function instead of letting moderators update the table, so they can't change content; moderators can't review their own reports; moderators are managed only in SQL.
+- **What AI did for CoinGecko token lookup:** read CoinGecko's Demo API docs (authentication, search, coin by id, coin by contract address), then wrote the `token-lookup` Edge Function and its tested logic, the app service, hook and indicator rules, the Token check mode, the token result screen, re-run from History, and 31 new tests (20 Jest, 11 Node). It also moved the Edge Function error handling shared with Google Safe Browsing into `src/services/edge-function.ts`. The indicators, thresholds and weights were proposed by AI and **should be reviewed by me**.
+- **How CoinGecko token lookup was checked:** 391 unit tests, 51 database tests, 23 function tests, TypeScript, ESLint and a web build pass. **Not yet deployed or tried with a real CoinGecko key.**
+- **What AI did for in-app moderation:** wrote the migration (moderators table, `is_moderator()`, `moderate_report()`, review columns, read policies for moderators), the moderation service and hooks, the To review list, the Moderation card and the reporter's view of the note, and 23 new tests (11 Jest, 12 database). Design decisions made with AI: status changes go through one database function instead of letting moderators update the table, so they can't change content; moderators can't review their own reports; moderators are managed only in SQL.
 - **How in-app moderation was checked:** 371 unit tests, 51 database tests, 12 function tests, TypeScript and ESLint pass. **Not yet run on the real Supabase project or on a phone.**
 - **App icon:** AI drew a new icon (white shield with a navy magnifying glass and a gold check mark, on the app's navy-to-blue gradient; gold is a nod to the PNG flag) with a Python script, and made every size the app needs: iOS/main icon, Android adaptive foreground and background, the Android 13 one-colour themed icon, splash image and favicon. The splash background is now navy to match. The Expo template's Icon Composer file (`assets/expo.icon`) was removed; iOS now uses the same PNG. **Checked:** `expo-doctor` passes; the icon was viewed at full size, in Android's circle crop and as the themed icon. It only appears on the home screen in a development or EAS build — Expo Go shows its own icon.
 - **What AI did for QR scan:** read the Expo SDK 58 `expo-camera` and `expo-image-picker` docs, then wrote the QR content parser (links, bookmarks, links inside text, crypto payment URIs and bare wallet addresses, Wi-Fi, phone/SMS/email), the scan screen with camera permission states and scan-from-screenshot, and 22 new tests (including that every explanation avoids verdict words). **Checked:** 335 unit tests, 35 database tests, 12 function tests, TypeScript, ESLint and a web build. **Not yet tested with a real camera** on a phone.
