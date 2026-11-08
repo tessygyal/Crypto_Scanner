@@ -9,6 +9,12 @@ import {
   updateReport,
 } from '../reports';
 
+const mockRemoveFiles = jest.fn(async (_paths: string[]) => {});
+jest.mock('../evidence', () => ({
+  listEvidencePaths: async () => ['u/r1-a.jpg'],
+  removeEvidenceFiles: (paths: string[]) => mockRemoveFiles(paths),
+}));
+
 let mockResult: { data: unknown; error: unknown } | Error = { data: null, error: null };
 const mockCalls: [string, unknown[]][] = [];
 
@@ -44,6 +50,7 @@ const row = (n: number, name: string | null = 'Kila') => ({
 
 beforeEach(() => {
   mockCalls.length = 0;
+  mockRemoveFiles.mockClear();
   mockResult = { data: null, error: null };
 });
 
@@ -134,6 +141,18 @@ describe('updateReport / deleteReport', () => {
     mockResult = { data: [{ id: 'r1' }], error: null };
     await expect(deleteReport('r1')).resolves.toBeUndefined();
     expect(mockCalls.map((c) => c[0])).toEqual(['from', 'delete', 'eq', 'select']);
+  });
+
+  it('removes the report’s screenshot files after deleting it', async () => {
+    mockResult = { data: [{ id: 'r1' }], error: null };
+    await deleteReport('r1');
+    expect(mockRemoveFiles).toHaveBeenCalledWith(['u/r1-a.jpg']);
+  });
+
+  it('keeps the files if the report could not be deleted', async () => {
+    mockResult = { data: [], error: null };
+    await expect(deleteReport('r1')).rejects.toThrow();
+    expect(mockRemoveFiles).not.toHaveBeenCalled();
   });
 });
 

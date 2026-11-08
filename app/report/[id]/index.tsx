@@ -6,6 +6,7 @@ import { Button } from '@/components/button';
 import { ConfirmDelete } from '@/components/confirm-delete';
 import { Disclaimer } from '@/components/disclaimer';
 import { FormMessage } from '@/components/form/form-message';
+import { EvidenceSection } from '@/components/reports/evidence-section';
 import { StatusPill } from '@/components/reports/status-pill';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
@@ -27,7 +28,7 @@ export default function ReportScreen() {
         <FormMessage
           tone="success"
           title="Thank you — report submitted"
-          message="It will appear for everyone once a moderator approves it."
+          message="It will appear for everyone once a moderator approves it. You can add screenshots below to help the moderators."
         />
       )}
       <AsyncState
@@ -86,6 +87,8 @@ function ReportDetails({ report }: { report: Report }) {
         </ThemedText>
       </View>
 
+      {isMine && <EvidenceSection reportId={report.id} canEdit />}
+
       {isMine && (
         <View className="gap-sm">
           <Button
@@ -97,7 +100,7 @@ function ReportDetails({ report }: { report: Report }) {
           <ConfirmDelete
             buttonLabel="Delete report"
             question="Delete this report?"
-            explanation="It will be removed for everyone, including from the map. This can't be undone."
+            explanation="It will be removed for everyone, including from the map, along with any screenshots. This can't be undone."
             onConfirm={() => remove.mutate(report.id, { onSuccess: () => router.back() })}
             isPending={remove.isPending}
             error={remove.error}
