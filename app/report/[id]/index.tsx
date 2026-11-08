@@ -7,14 +7,17 @@ import { ConfirmDelete } from '@/components/confirm-delete';
 import { Disclaimer } from '@/components/disclaimer';
 import { FormMessage } from '@/components/form/form-message';
 import { EvidenceSection } from '@/components/reports/evidence-section';
+import { ModerationPanel } from '@/components/reports/moderation-panel';
 import { StatusPill } from '@/components/reports/status-pill';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/context/auth-provider';
+import { useIsModerator } from '@/hooks/use-moderation';
 import { useDeleteReport, useReport } from '@/hooks/use-reports';
 import type { Report } from '@/services/reports';
 import { formatDateTime } from '@/utils/history';
 import { isOfflineWithoutData } from '@/utils/offline';
+import { reviewNoteHeading } from '@/utils/moderation';
 import { PLATFORM_LABELS, SCHEME_LABELS, STATUS_COPY } from '@/utils/reports';
 import { Card } from '@/components/card';
 
@@ -52,6 +55,7 @@ export default function ReportScreen() {
 function ReportDetails({ report }: { report: Report }) {
   const { user } = useAuth();
   const isMine = user?.id === report.user_id;
+  const isModerator = useIsModerator().data === true;
   const remove = useDeleteReport();
 
   return (
@@ -70,6 +74,14 @@ function ReportDetails({ report }: { report: Report }) {
           <ThemedText variant="small" color="textSecondary">
             {STATUS_COPY[report.status].detail}
           </ThemedText>
+          {report.review_note && (
+            <View className="gap-xs">
+              <ThemedText variant="smallBold">{reviewNoteHeading(report.status)}</ThemedText>
+              <ThemedText variant="small" selectable>
+                {report.review_note}
+              </ThemedText>
+            </View>
+          )}
         </Card>
       )}
 
@@ -88,6 +100,12 @@ function ReportDetails({ report }: { report: Report }) {
       </View>
 
       {isMine && <EvidenceSection reportId={report.id} canEdit />}
+      {!isMine && isModerator && (
+        <>
+          <EvidenceSection reportId={report.id} canEdit={false} />
+          <ModerationPanel report={report} />
+        </>
+      )}
 
       {isMine && (
         <View className="gap-sm">

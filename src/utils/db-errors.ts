@@ -24,6 +24,8 @@ const BY_CODE: Record<string, string> = {
   '23514': 'Some of the details are not valid. Please check and try again.',
   '23505': 'That already exists.',
   '23503': 'That item no longer exists.',
+  // Raised by our own functions (e.g. moderate_report) for a missing row
+  P0002: 'That item no longer exists.',
 };
 
 const FALLBACK = 'Something went wrong. Please try again.';

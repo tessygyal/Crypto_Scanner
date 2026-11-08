@@ -26,7 +26,7 @@ jest.mock('../supabase', () => ({
       const builder: Record<string, unknown> = {
         then: (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) => settle().then(resolve, reject),
       };
-      for (const m of ['insert', 'update', 'delete', 'select', 'order', 'range', 'eq', 'not', 'limit']) {
+      for (const m of ['insert', 'update', 'delete', 'select', 'order', 'range', 'eq', 'neq', 'not', 'limit']) {
         builder[m] = (...args: unknown[]) => (mockCalls.push([m, args]), builder);
       }
       for (const m of ['single', 'maybeSingle']) builder[m] = () => (mockCalls.push([m, []]), settle());
@@ -78,6 +78,21 @@ describe('listReports', () => {
     expect(mockCalls).toContainEqual(['range', [REPORTS_PAGE_SIZE, 2 * REPORTS_PAGE_SIZE]]);
     expect(page.reports).toHaveLength(REPORTS_PAGE_SIZE);
     expect(page.nextPage).toBe(2);
+  });
+
+  it('review: other people’s pending reports, oldest first', async () => {
+    mockResult = { data: [], error: null };
+    await listReports('review', 'mod-1', 0);
+    expect(mockCalls).toContainEqual(['eq', ['status', 'pending']]);
+    expect(mockCalls).toContainEqual(['neq', ['user_id', 'mod-1']]);
+    expect(mockCalls).toContainEqual(['order', ['created_at', { ascending: true }]]);
+  });
+
+  it('includes the moderator’s note so the reporter can read it', async () => {
+    mockResult = { data: [], error: null };
+    await listReports('mine', 'me', 0);
+    const select = mockCalls.find((c) => c[0] === 'select')?.[1][0] as string;
+    expect(select).toContain('review_note');
   });
 
   it('asks for the reporter display name from profiles', async () => {

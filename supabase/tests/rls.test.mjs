@@ -381,9 +381,121 @@ describe('storage bucket', () => {
   });
 });
 
+describe('moderation', () => {
+  const M = '00000000-0000-4000-8000-0000000000aa';
+  const moderate = (who, id, decision, note = null) =>
+    as(who, 'select public.moderate_report($1, $2, $3)', [id, decision, note]);
+  const status = async (id) =>
+    (await db.query('select status, reviewed_by, review_note from public.reports where id = $1', [id])).rows[0];
+
+  beforeEach(async () => {
+    await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ($1, 'm@example.com', '{"display_name":"Mod"}')`, [M]);
+    await db.query('insert into public.moderators (user_id) values ($1)', [M]);
+  });
+
+  it('is_moderator() is true only for moderators', async () => {
+    assert.equal((await as(M, 'select public.is_moderator() as m')).rows[0].m, true);
+    assert.equal((await as(A, 'select public.is_moderator() as m')).rows[0].m, false);
+    await rejects(as('anon', 'select public.is_moderator()'), DENIED);
+  });
+
+  it('nobody can read or change the moderator list through the API', async () => {
+    await rejects(as(A, 'select * from public.moderators'), DENIED);
+    await rejects(as(A, 'insert into public.moderators (user_id) values ($1)', [A]), DENIED);
+    await rejects(as(M, 'insert into public.moderators (user_id) values ($1)', [A]), DENIED);
+  });
+
+  it('moderators can read pending and rejected reports from everyone', async () => {
+    const r = await insertReport(A);
+    assert.equal((await as(M, 'select id from public.reports where id = $1', [r.id])).rows.length, 1);
+    // ...but other users still can't.
+    assert.equal((await as(B, 'select id from public.reports where id = $1', [r.id])).rows.length, 0);
+  });
+
+  it('a moderator can approve or reject, with an optional note', async () => {
+    const r = await insertReport(A);
+    await moderate(M, r.id, 'approved');
+    assert.deepEqual(await status(r.id), { status: 'approved', reviewed_by: M, review_note: null });
+    await moderate(M, r.id, 'rejected', '  Please remove the phone number in the screenshot.  ');
+    assert.deepEqual(await status(r.id), {
+      status: 'rejected',
+      reviewed_by: M,
+      review_note: 'Please remove the phone number in the screenshot.',
+    });
+    // An approved report is visible to everyone; a rejected one is not.
+    await moderate(M, r.id, 'approved');
+    assert.equal((await as(B, 'select id from public.reports where id = $1', [r.id])).rows.length, 1);
+  });
+
+  it('ordinary users cannot use moderate_report, even on their own report', async () => {
+    const r = await insertReport(A);
+    await rejects(moderate(A, r.id, 'approved'), /only moderators/);
+    await rejects(moderate(B, r.id, 'approved'), /only moderators/);
+    await rejects(moderate('anon', r.id, 'approved'), DENIED);
+    assert.equal((await status(r.id)).status, 'pending');
+  });
+
+  it('moderators cannot review their own reports', async () => {
+    const r = await insertReport(M);
+    await rejects(moderate(M, r.id, 'approved'), /their own reports/);
+  });
+
+  it('rejects bad decisions, long notes and unknown reports', async () => {
+    const r = await insertReport(A);
+    await rejects(moderate(M, r.id, 'pending'), /approved or rejected/);
+    await rejects(moderate(M, r.id, 'approved', 'x'.repeat(301)), /300 characters/);
+    await rejects(moderate(M, '00000000-0000-4000-8000-000000000999', 'approved'), /report not found/);
+  });
+
+  it('moderators cannot edit or delete someone else’s report content', async () => {
+    const r = await insertReport(A);
+    assert.equal((await as(M, `update public.reports set description = repeat('x', 30) where id = $1`, [r.id])).affectedRows, 0);
+    assert.equal((await as(M, 'delete from public.reports where id = $1', [r.id])).affectedRows, 0);
+  });
+
+  it('users cannot set review details themselves', async () => {
+    const res = await as(
+      A,
+      `insert into public.reports (scheme_type, platform, description, reviewed_by, review_note)
+       values ('phishing', 'sms', 'A text message with a fake bank login link.', $1, 'Looks fine') returning id`,
+      [M]
+    );
+    assert.deepEqual(await status(res.rows[0].id), { status: 'pending', reviewed_by: null, review_note: null });
+    await rejects(as(A, `update public.reports set review_note = 'ok' where id = $1`, [res.rows[0].id]), DENIED);
+  });
+
+  it('editing a reviewed report clears the review and sends it back', async () => {
+    const r = await insertReport(A);
+    await moderate(M, r.id, 'rejected', 'Remove the name.');
+    await as(A, `update public.reports set description = $2 where id = $1`, [r.id, 'Edited: the scheme promised double returns.']);
+    assert.deepEqual(await status(r.id), { status: 'pending', reviewed_by: null, review_note: null });
+  });
+
+  it('moderators can see screenshots on any report, and others still cannot', async () => {
+    const r = await insertReport(A);
+    const path = `${A}/${r.id}-shot.jpg`;
+    await as(A, 'insert into public.evidence (report_id, storage_path) values ($1, $2)', [r.id, path]);
+    await as(A, `insert into storage.objects (bucket_id, name) values ('evidence', $1)`, [path]);
+    assert.equal((await as(M, 'select * from public.evidence')).rows.length, 1);
+    assert.equal((await as(M, 'select * from storage.objects')).rows.length, 1);
+    // Read only: moderators can't delete them.
+    assert.equal((await as(M, 'delete from public.evidence')).affectedRows, 0);
+    assert.equal((await as(M, 'delete from storage.objects')).affectedRows, 0);
+    assert.equal((await as(B, 'select * from public.evidence')).rows.length, 0);
+    assert.equal((await as(B, 'select * from storage.objects')).rows.length, 0);
+  });
+
+  it('removing a moderator takes their access away', async () => {
+    const r = await insertReport(A);
+    await db.query('delete from public.moderators where user_id = $1', [M]);
+    assert.equal((await as(M, 'select id from public.reports where id = $1', [r.id])).rows.length, 0);
+    await rejects(moderate(M, r.id, 'approved'), /only moderators/);
+  });
+});
+
 describe('anonymous (signed-out) access', () => {
   it('can read nothing', async () => {
-    for (const table of ['profiles', 'checks', 'reports', 'evidence']) {
+    for (const table of ['profiles', 'checks', 'reports', 'evidence', 'moderators']) {
       await rejects(as('anon', `select * from public.${table}`), DENIED);
     }
   });

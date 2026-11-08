@@ -11,12 +11,14 @@ import { listEvidencePaths, removeEvidenceFiles } from './evidence';
  * "pending" (enforced by the database). Every function throws FriendlyDbError.
  */
 
+// One string literal (not joined with +) so supabase-js can type the result.
 const COLUMNS =
-  'id, user_id, scheme_type, platform, description, latitude, longitude, status, created_at, updated_at';
+  'id, user_id, scheme_type, platform, description, latitude, longitude, status, created_at, updated_at, reviewed_at, reviewed_by, review_note';
 export const REPORTS_PAGE_SIZE = 20;
 
 export type Report = ReportRow & { reporter: string | null };
-export type ReportScope = 'community' | 'mine';
+/** community = approved; mine = your own, any status; review = pending, for moderators. */
+export type ReportScope = 'community' | 'mine' | 'review';
 export type ReportPage = { reports: Report[]; nextPage: number | null };
 
 type RowWithProfile = ReportRow & { profiles: { display_name: string } | null };
@@ -25,15 +27,22 @@ function withReporter({ profiles, ...row }: RowWithProfile): Report {
   return { ...row, reporter: profiles?.display_name ?? null };
 }
 
-/** One page of reports, newest first. "community" = approved; "mine" = the user's own, any status. */
+/**
+ * One page of reports. "community" and "mine" are newest first. "review" is the
+ * moderators' queue of pending reports, oldest first so nothing waits forever
+ * (RLS only returns other people's pending reports to moderators).
+ */
 export async function listReports(scope: ReportScope, userId: string, page: number): Promise<ReportPage> {
   const from = page * REPORTS_PAGE_SIZE;
   let query = db().from('reports').select(`${COLUMNS}, profiles(display_name)`);
-  query = scope === 'community' ? query.eq('status', 'approved') : query.eq('user_id', userId);
+  if (scope === 'community') query = query.eq('status', 'approved');
+  else if (scope === 'mine') query = query.eq('user_id', userId);
+  else query = query.eq('status', 'pending').neq('user_id', userId);
+  const ascending = scope === 'review';
   const rows = (await run(
     query
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
+      .order('created_at', { ascending })
+      .order('id', { ascending })
       .range(from, from + REPORTS_PAGE_SIZE)
   )) as RowWithProfile[];
   return {

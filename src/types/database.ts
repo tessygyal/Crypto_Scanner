@@ -1,6 +1,6 @@
 /**
- * TypeScript types for the Supabase database, matching
- * supabase/migrations/20261106000000_initial_schema.sql.
+ * TypeScript types for the Supabase database, matching the SQL files in
+ * supabase/migrations (initial schema, report evidence, moderation).
  *
  * Written in the same shape as `supabase gen types typescript`. Once your
  * project is set up you can regenerate this file with:
@@ -105,6 +105,11 @@ export type Database = {
           status: ReportStatus;
           created_at: string;
           updated_at: string;
+          /** Set by moderate_report(); cleared when the report is edited. */
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          /** Optional note from the moderator to the reporter. */
+          review_note: string | null;
         };
         Insert: {
           id?: string;
@@ -159,9 +164,22 @@ export type Database = {
           },
         ];
       };
+      moderators: {
+        // Not readable or writable through the API; use is_moderator().
+        Row: { user_id: string; created_at: string };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      is_moderator: { Args: never; Returns: boolean };
+      moderate_report: {
+        Args: { report_id: string; decision: 'approved' | 'rejected'; note?: string | null };
+        Returns: undefined;
+      };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };
