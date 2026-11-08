@@ -12,6 +12,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/context/auth-provider';
 import { useSignOut } from '@/hooks/use-auth-actions';
+import { useIsModerator } from '@/hooks/use-moderation';
 import { useMyProfile, useUpdateDisplayName } from '@/hooks/use-profile';
 import { useSupabaseHealth } from '@/hooks/use-supabase-health';
 import type { Profile } from '@/types/database';
@@ -24,6 +25,7 @@ export default function ProfileScreen() {
   const profile = useMyProfile();
   const signOut = useSignOut();
   const health = useSupabaseHealth();
+  const isModerator = useIsModerator().data === true;
 
   return (
     <Screen hero={{ icon: 'person-circle', title: 'Profile', subtitle: 'Your account and app status.' }}>
@@ -42,6 +44,9 @@ export default function ProfileScreen() {
           {profile.data && <DisplayName profile={profile.data} />}
         </AsyncState>
         <Row label="Email" value={user?.email ?? '—'} />
+        {isModerator && (
+          <Row label="Role" value="Moderator: review pending reports under Reports → To review" />
+        )}
       </Card>
 
       {signOut.error && <FormMessage tone="error" message={signOut.error.message} />}

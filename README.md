@@ -19,11 +19,18 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 | **M8 — Offline cache** | ✅ Done (history, reports and map open offline; offline checks saved later) |
 | **QR scan (Should)** | ✅ Done (camera or screenshot; links go through the normal check) |
 | **Screenshot evidence (Should)** | ✅ Done (up to 3 private screenshots per report) |
-| Not built | CoinGecko token lookup, in-app moderation screen, and the *Could* features (see [Known limitations](#known-limitations)) |
+| **In-app moderation (Should)** | ✅ Done (moderators approve or reject in the app, with a note to the reporter) |
+| Not built | CoinGecko token lookup and the *Could* features (see [Known limitations](#known-limitations)) |
 
 **QR scan delivers:** a "Scan a QR code" button on the Check tab. The scan screen reads a QR code with the camera (`expo-camera`) or from a screenshot (`expo-image-picker`), because scam QR codes are often sent as images in chats. If the code holds a link, it goes straight to the normal link check (offline analysis + Google Safe Browsing) and the result says "Link from a QR code". Other codes are explained, never judged: crypto payment requests (with the coin and amount, and a warning that crypto payments can't be reversed), Wi-Fi networks, phone/SMS/email codes, and plain text. Nothing is opened or paid, and images stay on the phone. The camera asks only for camera access (no microphone).
 
 **Screenshot evidence delivers:** a **Screenshots (private)** section on your own report's screen. You can add up to 3 screenshots (JPEG, PNG or WebP, max 5 MB) and remove them. They go to the private `evidence` Storage bucket and are shown with links that expire after an hour. Only you and the moderators can see them, never the community, because chat screenshots often show names, faces and phone numbers. The app asks you to crop those out first. Images are re-saved at 70% quality to keep uploads small. The type is checked from the file's first bytes, not its name. Deleting a report also deletes its screenshot files. A new migration (`20261108000000_report_evidence.sql`) makes the database enforce the 3-screenshot limit. It also requires each file name to start with its report's id, so a file can't be attached to a different report. Uploads need a connection: offline they fail straight away with "Could not connect" and a retry.
+
+**In-app moderation delivers:** moderators get a **To review** list on the Reports tab, showing other people's pending reports oldest first. Opening a report shows its screenshots (read only) and a **Moderation** card with **Approve** / **Reject** and an optional note to the reporter (up to 300 characters). The reporter sees that note on their report, e.g. under "Why it wasn't approved". The Profile tab shows the moderator role. A new migration (`20261108010000_moderation.sql`) adds:
+
+- a `moderators` table that the API can't read or change, so moderators are added only in the SQL Editor (see [Make someone a moderator](#make-someone-a-moderator));
+- `is_moderator()`, plus policies that let moderators read every report and its screenshots (read only);
+- `moderate_report(report_id, decision, note)`, the only way to change a report's status from the app. It records who reviewed the report and when. Moderators can't review their own reports and can't edit or delete anyone's content. Editing a report clears the review and sends it back to *Pending review*.
 
 **M0 delivers:** project structure (`app/` + `src/`), theme, TanStack Query provider, Supabase client, environment-variable validation, shared UI states (loading / success / empty / error), visible disclaimer, `eas.json` build profiles, Jest + ESLint, and a temporary setup-status home screen that checks the Supabase connection. The auth flow and tabs replace that screen in M1.
 
@@ -41,7 +48,7 @@ An Expo (managed) + Expo Router + TypeScript mobile app for **IS323**. It helps 
 
 - **Schemes, not people.** The form blocks phone numbers and email addresses in the description (`findPersonalDetails` in `src/utils/reports.ts`), and asks users not to include names. Amounts such as "K10000" or "1000000 kina" are not mistaken for phone numbers.
 - **Approximate location only.** "Use my approximate location" asks for permission (handling refused, blocked → Settings, and location turned off), uses low accuracy, and rounds to 2 decimal places (about 1 km) before anything is saved. Location is optional.
-- **Moderation.** New reports are *Pending review* and visible only to their author. A moderator approves or rejects them in the Supabase dashboard (Table Editor → `reports` → `status`). Editing a report sends it back to *Pending review* (enforced by the database, see M2).
+- **Moderation.** New reports are *Pending review* and visible only to their author and moderators. A moderator approves or rejects them in the app (Reports → To review), or in the Supabase dashboard. Editing a report sends it back to *Pending review* (enforced by the database).
 - Approved reports show the reporter's **display name**, never their email.
 
 **M7 delivers:** the *one external API* Must feature. Every link check is also looked up in **Google Safe Browsing** through a Supabase Edge Function (`supabase/functions/safe-browsing`), so the Google API key never reaches the app. A Google listing is a risk indicator worth 60 points, which on its own gives *High risk indicators*. "Not listed" is shown as a note that is *not proof* the link is trustworthy. The result screen waits for Google before showing the level, shows loading and error-with-retry states, and if Google can't be reached it uses only the on-phone checks and says so. The saved history entry includes Google's answer. Re-running a link from History looks it up again.
@@ -73,14 +80,14 @@ The map is [Leaflet](https://leafletjs.com) with [OpenStreetMap](https://www.ope
 
 - **Must:** auth, offline URL analysis, one external API (Google Safe Browsing via a backend function), report CRUD, map of reports, check history, offline cache.
 - **Must:** ✅ all done.
-- **Should:** ✅ QR scan, ✅ password reset, ✅ screenshot evidence, ✅ moderation (in the Supabase dashboard, not in the app). Not built: CoinGecko token lookup.
+- **Should:** ✅ QR scan, ✅ password reset, ✅ screenshot evidence, ✅ moderation (in the app). Not built: CoinGecko token lookup.
 - **Could:** RDAP domain age, notifications, Tok Pisin. Not built.
 
 ## Known limitations
 
-- **Not built:** CoinGecko token lookup, an in-app moderation screen, and the *Could* features.
+- **Not built:** CoinGecko token lookup and the *Could* features.
 - **Screenshots are only as private as the person makes them:** the app asks people to crop out names, faces and numbers, but it can't check the image itself. Moderators should reject a report whose screenshots identify people.
-- **Moderation is manual:** new reports stay *Pending review* until someone sets `status` to `approved` in the Supabase dashboard (Table Editor → `reports`).
+- **Moderation needs people:** new reports stay *Pending review* until a moderator reviews them. Moderators are added by hand in the SQL Editor, and there are no notifications when new reports arrive.
 - **Emails:** Supabase's built-in email sender allows only about 2 sign-up/reset emails per hour. A real launch needs custom SMTP.
 - **Tested mostly in a browser:** the camera (QR scan), the map inside the phone WebView, and airplane-mode offline behaviour were built and unit-tested, but have had little testing on a real phone. The app icon only shows in an EAS build (Expo Go shows its own).
 - **The risk check is advice, not a verdict:** rule weights and word lists were proposed by AI and should be reviewed against real PNG scam examples. Google Safe Browsing only knows sites that have already been reported.
@@ -136,6 +143,17 @@ Run every file in [`supabase/migrations`](supabase/migrations) **in name order**
 
 Users who signed up **before** you ran the migration have no profile row. Delete those test users (Authentication → Users) and sign up again.
 
+### Make someone a moderator
+
+Moderators can review reports in the app. In **SQL Editor**, run (with their sign-in email):
+
+```sql
+insert into public.moderators (user_id)
+select id from auth.users where email = 'moderator@example.com';
+```
+
+To remove them: `delete from public.moderators where user_id = (select id from auth.users where email = 'moderator@example.com');`. They need to sign out and in again (or wait a few minutes) for the app to notice.
+
 ### 5. Set up Google Safe Browsing (Edge Function)
 
 1. In the [Google Cloud console](https://console.cloud.google.com/), create a project, enable the **Safe Browsing API**, then go to **APIs & Services → Credentials → Create credentials → API key**. Restrict the key to the *Safe Browsing API*.
@@ -189,15 +207,16 @@ auth.users 1 ── 1 profiles      (created automatically on sign-up)
 |---|---|---|
 | `profiles` | Any signed-in user (display name only, no email) | Owner (display name only) |
 | `checks` | Owner | Owner (insert / delete; no edits) |
-| `reports` | Everyone signed in: **approved** reports. Owner: own reports in any status | Owner. New reports are always `pending`; editing an approved report sends it back to `pending`; users can never change `status` |
-| `evidence` | Owner | Owner, only for their own reports and their own Storage folder; at most 3 per report; file name must start with the report id; no edits |
-| Storage `evidence` bucket | Owner (files in `<user id>/…`) | Owner; private, images only, max 5 MB |
+| `reports` | Everyone signed in: **approved** reports. Owner: own reports in any status. Moderators: all | Owner. New reports are always `pending`; editing a report sends it back to `pending` and clears the review; users can never change `status`. Moderators change `status` only via `moderate_report()`, never on their own reports |
+| `evidence` | Owner, moderators | Owner, only for their own reports and their own Storage folder; at most 3 per report; file name must start with the report id; no edits |
+| `moderators` | Nobody through the API (the app uses `is_moderator()`) | SQL Editor only |
+| Storage `evidence` bucket | Owner (files in `<user id>/…`), moderators | Owner; private, images only, max 5 MB |
 
-Signed-out (anonymous) users can read nothing. **Moderators** approve or reject reports in the Supabase dashboard (Table Editor → `reports` → `status`), which bypasses RLS.
+Signed-out (anonymous) users can read nothing. **Moderators** approve or reject reports in the app, or in the Supabase dashboard (Table Editor → `reports` → `status`), which bypasses RLS.
 
 ### Database tests
 
-`npm run test:db` runs the real migration in [PGlite](https://pglite.dev) (Postgres compiled to WebAssembly) on top of a small stand-in for Supabase's `auth` and `storage` schemas (`supabase/tests/supabase-stub.sql`). It then acts as different users and checks 39 rules: who can read, insert, update and delete each table, the sign-up trigger, the moderation rules, the storage folder rules, and that anonymous users see nothing. No Supabase project or Docker is needed.
+`npm run test:db` runs the real migration in [PGlite](https://pglite.dev) (Postgres compiled to WebAssembly) on top of a small stand-in for Supabase's `auth` and `storage` schemas (`supabase/tests/supabase-stub.sql`). It then acts as different users and checks 51 rules: who can read, insert, update and delete each table, the sign-up trigger, the moderation rules, the storage folder rules, and that anonymous users see nothing. No Supabase project or Docker is needed.
 
 ## How the risk check works
 
@@ -318,6 +337,8 @@ This project was developed with help from **Claude Code** (Anthropic's AI coding
 
 - **What AI did for screenshot evidence:** read the Expo SDK 58 `expo-image-picker` and `supabase-js` Storage docs and types, then wrote the migration (3-screenshot limit, file name tied to the report), the evidence service (upload with type and size checks, signed links, delete, clean-up when a report is deleted or a link fails), hooks, the Screenshots section, and 29 new tests (25 Jest, 4 database). Decision made with AI: screenshots stay private to the reporter and moderators, never shown to the community.
 - **How screenshot evidence was checked:** 360 unit tests, 39 database tests, 12 function tests, TypeScript and ESLint pass. **Not yet tested against the real Supabase Storage bucket or on a phone.**
+- **What AI did for in-app moderation:** wrote the migration (moderators table, `is_moderator()`, `moderate_report()`, review columns, read policies for moderators), the moderation service and hooks, the To review list, the Moderation card and the reporter's view of the note, and 22 new tests (10 Jest, 12 database). Design decisions made with AI: status changes go through one database function instead of letting moderators update the table, so they can't change content; moderators can't review their own reports; moderators are managed only in SQL.
+- **How in-app moderation was checked:** 371 unit tests, 51 database tests, 12 function tests, TypeScript and ESLint pass. **Not yet run on the real Supabase project or on a phone.**
 - **App icon:** AI drew a new icon (white shield with a navy magnifying glass and a gold check mark, on the app's navy-to-blue gradient; gold is a nod to the PNG flag) with a Python script, and made every size the app needs: iOS/main icon, Android adaptive foreground and background, the Android 13 one-colour themed icon, splash image and favicon. The splash background is now navy to match. The Expo template's Icon Composer file (`assets/expo.icon`) was removed; iOS now uses the same PNG. **Checked:** `expo-doctor` passes; the icon was viewed at full size, in Android's circle crop and as the themed icon. It only appears on the home screen in a development or EAS build — Expo Go shows its own icon.
 - **What AI did for QR scan:** read the Expo SDK 58 `expo-camera` and `expo-image-picker` docs, then wrote the QR content parser (links, bookmarks, links inside text, crypto payment URIs and bare wallet addresses, Wi-Fi, phone/SMS/email), the scan screen with camera permission states and scan-from-screenshot, and 22 new tests (including that every explanation avoids verdict words). **Checked:** 335 unit tests, 35 database tests, 12 function tests, TypeScript, ESLint and a web build. **Not yet tested with a real camera** on a phone.
 - **Visual refresh ("Trustworthy blue"):** chosen by me from three options AI mocked up. AI picked the palette and checked every text/background pair meets WCAG AA contrast (4.5:1) in light and dark mode, then added the navy `HeroHeader` on each tab and the sign-in screen, navy navigation bars, a light status bar, and a `Card` component with a soft shadow for results, rows and forms. Risk colours are unchanged and still always come with an icon and a text label.

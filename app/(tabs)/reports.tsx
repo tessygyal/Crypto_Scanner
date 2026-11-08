@@ -9,6 +9,8 @@ import { Button } from '@/components/button';
 import { ChoiceChip } from '@/components/choice-chip';
 import { OfflineBanner } from '@/components/offline-banner';
 import { ReportRow } from '@/components/reports/report-row';
+import { ThemedText } from '@/components/themed-text';
+import { useIsModerator } from '@/hooks/use-moderation';
 import { useReports } from '@/hooks/use-reports';
 import { useTheme } from '@/hooks/use-theme';
 import type { ReportScope } from '@/services/reports';
@@ -24,12 +26,19 @@ const EMPTY: Record<ReportScope, { title: string; message: string }> = {
     title: "You haven't reported anything yet",
     message: 'Seen a scam scheme? Report it to warn others in your community.',
   },
+  review: {
+    title: 'Nothing to review',
+    message: 'There are no pending reports from other people right now.',
+  },
 };
 
 export default function ReportsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const [scope, setScope] = useState<ReportScope>('community');
+  const isModerator = useIsModerator().data === true;
+  const [chosenScope, setScope] = useState<ReportScope>('community');
+  // If moderator access is removed, fall back to the community list.
+  const scope = chosenScope === 'review' && !isModerator ? 'community' : chosenScope;
   const reports = useReports(scope);
   const items = reports.data?.pages.flatMap((p) => p.reports) ?? [];
   const isEmpty = reports.isSuccess && items.length === 0;
@@ -60,7 +69,15 @@ export default function ReportsScreen() {
           <View className="flex-row gap-sm" accessibilityRole="radiogroup" accessibilityLabel="Which reports to show">
             <ChoiceChip label="Community" selected={scope === 'community'} onPress={() => setScope('community')} />
             <ChoiceChip label="My reports" selected={scope === 'mine'} onPress={() => setScope('mine')} />
+            {isModerator && (
+              <ChoiceChip label="To review" selected={scope === 'review'} onPress={() => setScope('review')} />
+            )}
           </View>
+          {scope === 'review' && (
+            <ThemedText variant="small" color="textSecondary">
+              Pending reports from other people, oldest first. Open one to approve or reject it.
+            </ThemedText>
+          )}
 
           <OfflineBanner />
           {!reports.isSuccess && (
