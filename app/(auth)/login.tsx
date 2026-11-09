@@ -30,6 +30,7 @@ export default function LoginScreen() {
     <Screen
       hero={{
         icon: 'shield-checkmark',
+        logo: require('@/assets/images/logo.png'),
         title: 'Scam Detector PNG',
         subtitle: 'Check before you pay. Sign in to check links and report scam schemes.',
       }}>
