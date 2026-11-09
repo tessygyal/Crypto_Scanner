@@ -34,6 +34,10 @@ describe('color variables', () => {
     }
   });
 
+  it("uses darkMode 'class' (the default 'media' crashes NativeWind on web)", () => {
+    expect(tailwind.darkMode).toBe('class');
+  });
+
   it('light and dark define the same tokens', () => {
     expect(Object.keys(palette.dark).sort()).toEqual(Object.keys(palette.light).sort());
   });
