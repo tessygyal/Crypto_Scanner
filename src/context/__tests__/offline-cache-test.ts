@@ -27,7 +27,8 @@ jest.mock('@/services/checks', () => ({ saveCheck: (r: unknown) => mockSaveCheck
 // The provider module imports auth; these tests only use createQueryClient.
 jest.mock('@/context/auth-provider', () => ({ useAuth: () => ({ user: null }) }));
 
-// Track clients so their (7-day) garbage-collection timers are cleared after each test.
+// Track clients so their garbage-collection timers are cleared after each test
+// (7 days for queries, 5 minutes for mutations), or Jest's worker can't exit.
 const clients: QueryClient[] = [];
 function createQueryClient() {
   const c = createAppQueryClient();
@@ -66,7 +67,11 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  for (const c of clients.splice(0)) c.clear();
+  for (const c of clients.splice(0)) {
+    // clear() destroys queries but only drops mutations, leaving their timers running.
+    for (const m of c.getMutationCache().getAll()) m.destroy();
+    c.clear();
+  }
 });
 
 afterAll(() => onlineManager.setOnline(true));
