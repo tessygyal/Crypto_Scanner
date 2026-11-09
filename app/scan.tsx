@@ -8,6 +8,7 @@ import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { Disclaimer } from '@/components/disclaimer';
 import { FormMessage } from '@/components/form/form-message';
+import { ViewfinderOverlay } from '@/components/scan/viewfinder-overlay';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -62,7 +63,7 @@ export default function ScanScreen() {
           </View>
           <ThemedText>{detail}</ThemedText>
           {found.raw ? (
-            <View className="gap-xs rounded-md bg-surface-selected p-sm">
+            <View className="gap-xs rounded-md bg-surface-selected p-md">
               <ThemedText variant="smallBold" color="textSecondary">
                 What the QR code contains
               </ThemedText>
@@ -89,7 +90,8 @@ export default function ScanScreen() {
 
       {permission === null ? null : canUseCamera ? (
         <View
-          className="aspect-square w-full overflow-hidden rounded-lg bg-hero"
+          // Always dark behind the camera, in light and dark mode.
+          className="aspect-square w-full max-w-[360px] self-center overflow-hidden rounded-lg bg-[#1a0b3d]"
           accessibilityLabel="Camera view for scanning a QR code">
           {/* Only one camera preview may run at a time, so stop it when the screen isn't visible. */}
           {focused && (
@@ -100,6 +102,7 @@ export default function ScanScreen() {
               onBarcodeScanned={found ? undefined : onScanned}
             />
           )}
+          <ViewfinderOverlay />
         </View>
       ) : (
         <Card>
@@ -122,6 +125,7 @@ export default function ScanScreen() {
       <Button
         label="Scan from a screenshot"
         variant="secondary"
+        icon="image-outline"
         onPress={fromImage}
         loading={picking}
         fullWidth

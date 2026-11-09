@@ -8,37 +8,39 @@
  */
 
 export const palette = {
-  // "Trustworthy blue": navy header area, tinted page, white cards. Every text/background
-  // pair here meets WCAG AA contrast (4.5:1) in both modes.
+  // Purple: white page, soft lavender cards, deep-purple text, violet accent.
+  // Dark mode: deep-purple page with light text. Every text/background pair here
+  // meets WCAG AA contrast (4.5:1) in both modes. The header ("hero") is the
+  // page colour, so headers sit flat on the page.
   light: {
-    background: '#f2f5fa',
-    surface: '#ffffff',
-    surfaceSelected: '#e3eaf5',
-    border: '#d6deea',
-    text: '#0f1b2d',
-    textSecondary: '#4a5568',
-    primary: '#1f5fbf',
+    background: '#ffffff',
+    surface: '#f4eeff',
+    surfaceSelected: '#e7dcff',
+    border: '#e4dafb',
+    text: '#1e0a4f',
+    textSecondary: '#5b4b85',
+    primary: '#6b1fff',
     onPrimary: '#ffffff',
-    danger: '#b42318',
+    danger: '#b42328',
     onDanger: '#ffffff',
-    hero: '#0b2a4a',
-    onHero: '#ffffff',
-    heroMuted: '#b9cbe6',
+    hero: '#ffffff',
+    onHero: '#1e0a4f',
+    heroMuted: '#5b4b85',
   },
   dark: {
-    background: '#0a111d',
-    surface: '#121c2c',
-    surfaceSelected: '#1d2a40',
-    border: '#2a3a55',
-    text: '#eef2f8',
-    textSecondary: '#a9b6ca',
-    primary: '#6aa5ff',
-    onPrimary: '#0a111d',
-    danger: '#f97066',
-    onDanger: '#0a111d',
-    hero: '#0d1f38',
-    onHero: '#ffffff',
-    heroMuted: '#9fb4d4',
+    background: '#140630',
+    surface: '#22104a',
+    surfaceSelected: '#301a63',
+    border: '#3a2470',
+    text: '#f3edff',
+    textSecondary: '#c3b5e8',
+    primary: '#b89bff',
+    onPrimary: '#140630',
+    danger: '#ff8d90',
+    onDanger: '#140630',
+    hero: '#140630',
+    onHero: '#f3edff',
+    heroMuted: '#c3b5e8',
   },
 } as const;
 
@@ -72,10 +74,10 @@ export function cssColorVariables(colors: ThemeColors): Record<string, string> {
  * "no known warnings found" — never "safe" or "this is a scam".
  */
 export const riskColors = {
-  none: '#0ca30c',
-  low: '#fab219',
+  none: '#1fa971',
+  low: '#f5a524',
   medium: '#ec835a',
-  high: '#d03b3b',
+  high: '#e5484d',
 } as const;
 
 export type RiskLevel = keyof typeof riskColors;
@@ -89,20 +91,22 @@ export const spacing = {
   xxl: 64,
 } as const;
 
+// Soft, rounded shapes: 16–24px corners on boxes, pills for buttons, chips and inputs.
 export const radius = {
-  sm: 6,
-  md: 12,
-  lg: 16,
+  sm: 10,
+  md: 16,
+  lg: 24,
   pill: 999,
 } as const;
 
+// Bold, heavy headings.
 export const typography = {
-  title: { fontSize: 32, lineHeight: 40, fontWeight: '700' },
-  heading: { fontSize: 20, lineHeight: 28, fontWeight: '600' },
+  title: { fontSize: 32, lineHeight: 40, fontWeight: '800' },
+  heading: { fontSize: 20, lineHeight: 28, fontWeight: '800' },
   body: { fontSize: 16, lineHeight: 24, fontWeight: '400' },
-  bodyBold: { fontSize: 16, lineHeight: 24, fontWeight: '600' },
+  bodyBold: { fontSize: 16, lineHeight: 24, fontWeight: '700' },
   small: { fontSize: 14, lineHeight: 20, fontWeight: '400' },
-  smallBold: { fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  smallBold: { fontSize: 14, lineHeight: 20, fontWeight: '700' },
 } as const;
 
 export type TypographyVariant = keyof typeof typography;
@@ -111,7 +115,9 @@ export type TypographyVariant = keyof typeof typography;
 export const maxContentWidth = 720;
 
 /**
- * Soft shadow for cards. RN's boxShadow works on Android, iOS (New Architecture) and web.
- * Barely visible in dark mode, where the border does the work.
+ * A risk colour as a soft tint, for pill and icon backgrounds behind normal text.
+ * `#rrggbb` + alpha byte, which React Native and the web both understand.
  */
-export const cardShadow = { boxShadow: '0 1px 2px rgba(15, 27, 45, 0.06), 0 2px 8px rgba(15, 27, 45, 0.06)' } as const;
+export function riskTint(level: RiskLevel): string {
+  return `${riskColors[level]}2e`;
+}

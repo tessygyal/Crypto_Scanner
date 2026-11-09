@@ -2,9 +2,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { z } from 'zod';
 
+import { ActionChip } from '@/components/action-chip';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { ChoiceChip } from '@/components/choice-chip';
@@ -12,6 +13,7 @@ import { Disclaimer } from '@/components/disclaimer';
 import { TextField } from '@/components/form/text-field';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
+import { readClipboardText } from '@/services/clipboard';
 import { SCHEME_QUESTIONS } from '@/utils/risk/scheme-scorecard';
 import { checkTokenInput } from '@/utils/token';
 import { analyzeUrl } from '@/utils/risk/url-analysis';
@@ -64,13 +66,23 @@ function LinkCheck() {
     router.push({ pathname: '/check-result', params: { type: 'url', input: url.trim() } });
   });
 
+  const paste = async () => {
+    const text = await readClipboardText();
+    if (!text) {
+      setError('url', { message: 'Nothing to paste. Copy a link first, or allow pasting when asked.' });
+      return;
+    }
+    setValue('url', text, { shouldValidate: true });
+  };
+
   return (
     <View className="gap-md">
       <TextField
         control={control}
         name="url"
         label="Link"
-        placeholder="https://…"
+        icon="link"
+        placeholder="Enter a website address"
         hint="Checked on your phone — the link is not opened."
         keyboardType="url"
         autoComplete="off"
@@ -79,25 +91,28 @@ function LinkCheck() {
         onSubmitEditing={() => onSubmit()}
       />
       <Button label="Check link" onPress={onSubmit} fullWidth />
-      <Button label="Scan a QR code" variant="secondary" onPress={() => router.push('/scan')} fullWidth />
-
-      <View className="gap-sm">
-        <ThemedText variant="smallBold" color="textSecondary">
-          Try an example
-        </ThemedText>
-        {EXAMPLES.map((example) => (
-          <Pressable
-            key={example}
-            onPress={() => setValue('url', example, { shouldValidate: true })}
-            accessibilityRole="button"
-            accessibilityLabel={`Use example ${example}`}
-            className="rounded-sm border border-border bg-surface px-md py-sm active:opacity-70">
-            <ThemedText variant="small" numberOfLines={1}>
-              {example}
-            </ThemedText>
-          </Pressable>
-        ))}
+      <View className="flex-row flex-wrap gap-sm">
+        <ActionChip label="Paste from clipboard" icon="clipboard-outline" onPress={paste} />
+        <ActionChip label="Scan a QR code" icon="qr-code-outline" onPress={() => router.push('/scan')} />
       </View>
+
+      <Card>
+        <ThemedText variant="bodyBold">Try an example</ThemedText>
+        <ThemedText variant="small" color="textSecondary">
+          Made-up addresses that show what the checker looks for.
+        </ThemedText>
+        <View className="flex-row flex-wrap gap-sm pt-xs">
+          {EXAMPLES.map((example) => (
+            <ActionChip
+              key={example}
+              label={example.replace(/^https?:\/\//, '')}
+              icon="globe-outline"
+              onPress={() => setValue('url', example, { shouldValidate: true })}
+              accessibilityLabel={`Use example ${example}`}
+            />
+          ))}
+        </View>
+      </Card>
     </View>
   );
 }

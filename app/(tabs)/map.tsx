@@ -20,7 +20,6 @@ import { formatWhen } from '@/utils/history';
 import { groupByLocation, type MapPlace } from '@/utils/map';
 import { isOfflineWithoutData } from '@/utils/offline';
 import { PLATFORM_LABELS, SCHEME_LABELS } from '@/utils/reports';
-import { cardShadow } from '@/theme';
 
 const MAP_HEIGHT = 380;
 
@@ -60,7 +59,7 @@ export default function MapScreen() {
         subtitle: 'Where approved scam reports have been seen across PNG. Locations are approximate (about 1 km).',
       }}>
 
-      <View className="overflow-hidden rounded-lg border border-border bg-surface" style={[cardShadow, { height: MAP_HEIGHT }]}>
+      <View className="overflow-hidden rounded-lg bg-surface" style={{ height: MAP_HEIGHT }}>
         {reports.isLoading ? (
           <View className="flex-1 items-center justify-center gap-sm">
             <ActivityIndicator color={theme.textSecondary} />

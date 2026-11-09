@@ -107,7 +107,7 @@ export function buildMapHtml(places: Pick<MapPlace, 'key' | 'latitude' | 'longit
 <style>
   html, body, #map { height: 100%; margin: 0; background: ${dark ? '#1a1a19' : '#f4f5f7'}; }
   .count { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
-    border-radius: 50%; background: #d03b3b; color: #fff; border: 2px solid #fff;
+    border-radius: 50%; background: #e5484d; color: #fff; border: 2px solid #fff;
     font: 600 13px system-ui, sans-serif; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
   .error { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     padding: 24px; text-align: center; font: 15px system-ui, sans-serif; color: ${dark ? '#f0efec' : '#0b0b0b'}; }
