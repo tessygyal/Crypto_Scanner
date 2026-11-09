@@ -25,8 +25,8 @@ export default function RootLayout() {
           <ThemeVariables>
             <RootNavigator />
           </ThemeVariables>
-          {/* Every screen starts with a navy header, so the status bar text is always light. */}
-          <StatusBar style="light" />
+          {/* Headers are the page colour, so the status bar follows light/dark mode. */}
+          <StatusBar style="auto" />
         </ThemeProvider>
       </QueryProvider>
     </AuthProvider>

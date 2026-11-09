@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useState, type ComponentProps } from 'react';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
 import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 
@@ -13,6 +14,8 @@ type Props<T extends FieldValues> = {
   /** Password field with a show/hide toggle. */
   secure?: boolean;
   hint?: string;
+  /** Decorative icon at the start of the field (e.g. "link" for a web address). */
+  icon?: ComponentProps<typeof Ionicons>['name'];
 } & Pick<
   TextInputProps,
   | 'placeholder'
@@ -27,10 +30,15 @@ type Props<T extends FieldValues> = {
   | 'multiline'
 >;
 
-/** A labelled text input bound to react-hook-form, with its validation error underneath. */
-export function TextField<T extends FieldValues>({ control, name, label, secure, hint, ...inputProps }: Props<T>) {
+/**
+ * A labelled text input bound to react-hook-form, with its validation error underneath.
+ * Single-line fields are lavender pills; multi-line fields are rounded boxes.
+ * The border turns purple while typing and red when there is an error.
+ */
+export function TextField<T extends FieldValues>({ control, name, label, secure, hint, icon, ...inputProps }: Props<T>) {
   const theme = useTheme();
   const [hidden, setHidden] = useState(true);
+  const [focused, setFocused] = useState(false);
 
   return (
     <Controller
@@ -43,14 +51,21 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
           </ThemedText>
           <View
             className={cn(
-              'min-h-12 flex-row items-center rounded-md border bg-surface',
-              error ? 'border-danger' : 'border-border'
+              'min-h-14 flex-row items-center border-2 bg-surface',
+              inputProps.multiline ? 'rounded-md' : 'rounded-pill',
+              icon && 'pl-md',
+              error ? 'border-danger' : focused ? 'border-primary' : 'border-transparent'
             )}>
+            {icon && <Ionicons name={icon} size={22} color={theme.primary} importantForAccessibility="no" />}
             <TextInput
               ref={ref}
               value={value ?? ''}
               onChangeText={onChange}
-              onBlur={onBlur}
+              onFocus={() => setFocused(true)}
+              onBlur={() => {
+                setFocused(false);
+                onBlur();
+              }}
               secureTextEntry={secure && hidden}
               autoCapitalize={inputProps.autoCapitalize ?? 'none'}
               autoCorrect={false}
@@ -60,7 +75,8 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
               aria-labelledby={`${name}-label`}
               aria-invalid={!!error}
               className={cn(
-                'flex-1 px-md py-3 text-body text-text',
+                'flex-1 py-3 text-body text-text',
+                icon ? 'pl-sm pr-lg' : 'px-lg',
                 inputProps.multiline && 'min-h-[140px] align-top'
               )}
               {...inputProps}
@@ -71,7 +87,7 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
                 accessibilityRole="button"
                 accessibilityLabel={hidden ? `Show ${label.toLowerCase()}` : `Hide ${label.toLowerCase()}`}
                 hitSlop={8}
-                className="px-md">
+                className="min-h-12 justify-center pr-lg">
                 <ThemedText variant="smallBold" color="primary">
                   {hidden ? 'Show' : 'Hide'}
                 </ThemedText>
@@ -79,11 +95,14 @@ export function TextField<T extends FieldValues>({ control, name, label, secure,
             )}
           </View>
           {error?.message ? (
-            <ThemedText variant="small" color="danger" accessibilityLiveRegion="polite">
-              {error.message}
-            </ThemedText>
+            <View className="flex-row items-center gap-xs px-sm" accessibilityLiveRegion="polite">
+              <Ionicons name="alert-circle" size={16} color={theme.danger} importantForAccessibility="no" />
+              <ThemedText variant="smallBold" color="danger" className="flex-1">
+                {error.message}
+              </ThemedText>
+            </View>
           ) : hint ? (
-            <ThemedText variant="small" color="textSecondary">
+            <ThemedText variant="small" color="textSecondary" className="px-sm">
               {hint}
             </ThemedText>
           ) : null}

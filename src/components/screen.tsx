@@ -8,7 +8,7 @@ import { spacing } from '@/theme';
 
 /**
  * Scrollable, safe-area-aware page with a readable max width.
- * - `hero`: the navy header at the top (tabs and sign-in). It stays in place while the page scrolls.
+ * - `hero`: the big-title header at the top (tabs and sign-in). It stays in place while the page scrolls.
  * - `hasHeader`: a navigation header already covers the status bar.
  * Shows the offline banner at the top while the phone is offline.
  */

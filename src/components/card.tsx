@@ -1,15 +1,8 @@
 import { View, type ViewProps } from 'react-native';
 
-import { cardShadow } from '@/theme';
 import { cn } from '@/utils/cn';
 
-/** A white (dark: raised) card with a soft shadow. Pass extra classes for spacing or layout. */
-export function Card({ className, style, ...rest }: ViewProps & { className?: string }) {
-  return (
-    <View
-      className={cn('gap-sm rounded-lg border border-border bg-surface p-md', className)}
-      style={[cardShadow, style]}
-      {...rest}
-    />
-  );
+/** A soft lavender card (deep purple in dark mode), flat with no shadow. Pass extra classes for spacing or layout. */
+export function Card({ className, ...rest }: ViewProps & { className?: string }) {
+  return <View className={cn('gap-sm rounded-lg bg-surface p-lg', className)} {...rest} />;
 }

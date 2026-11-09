@@ -1,12 +1,12 @@
 import { useTheme } from '@/hooks/use-theme';
 
-/** Navy navigation bars to match the tab headers (see HeroHeader). */
+/** Flat navigation bars in the page colour, with a purple back arrow (matches HeroHeader). */
 export function useNavHeaderOptions() {
   const theme = useTheme();
   return {
     headerStyle: { backgroundColor: theme.hero },
-    headerTintColor: theme.onHero,
-    headerTitleStyle: { color: theme.onHero },
+    headerTintColor: theme.primary,
+    headerTitleStyle: { color: theme.onHero, fontWeight: '800' },
     headerShadowVisible: false,
   } as const;
 }

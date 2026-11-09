@@ -7,36 +7,36 @@
    a unit test fails if they drift apart. */
 @layer base {
   :root {
-    --color-background: 242 245 250;
-    --color-surface: 255 255 255;
-    --color-surface-selected: 227 234 245;
-    --color-border: 214 222 234;
-    --color-text: 15 27 45;
-    --color-text-secondary: 74 85 104;
-    --color-primary: 31 95 191;
+    --color-background: 255 255 255;
+    --color-surface: 244 238 255;
+    --color-surface-selected: 231 220 255;
+    --color-border: 228 218 251;
+    --color-text: 30 10 79;
+    --color-text-secondary: 91 75 133;
+    --color-primary: 107 31 255;
     --color-on-primary: 255 255 255;
-    --color-danger: 180 35 24;
+    --color-danger: 180 35 40;
     --color-on-danger: 255 255 255;
-    --color-hero: 11 42 74;
-    --color-on-hero: 255 255 255;
-    --color-hero-muted: 185 203 230;
+    --color-hero: 255 255 255;
+    --color-on-hero: 30 10 79;
+    --color-hero-muted: 91 75 133;
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --color-background: 10 17 29;
-      --color-surface: 18 28 44;
-      --color-surface-selected: 29 42 64;
-      --color-border: 42 58 85;
-      --color-text: 238 242 248;
-      --color-text-secondary: 169 182 202;
-      --color-primary: 106 165 255;
-      --color-on-primary: 10 17 29;
-      --color-danger: 249 112 102;
-      --color-on-danger: 10 17 29;
-      --color-hero: 13 31 56;
-      --color-on-hero: 255 255 255;
-      --color-hero-muted: 159 180 212;
+      --color-background: 20 6 48;
+      --color-surface: 34 16 74;
+      --color-surface-selected: 48 26 99;
+      --color-border: 58 36 112;
+      --color-text: 243 237 255;
+      --color-text-secondary: 195 181 232;
+      --color-primary: 184 155 255;
+      --color-on-primary: 20 6 48;
+      --color-danger: 255 141 144;
+      --color-on-danger: 20 6 48;
+      --color-hero: 20 6 48;
+      --color-on-hero: 243 237 255;
+      --color-hero-muted: 195 181 232;
     }
   }
 }

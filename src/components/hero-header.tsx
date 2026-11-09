@@ -17,44 +17,39 @@ export type HeroProps = {
 };
 
 /**
- * The navy header at the top of each tab (and the sign-in screen). It also
- * fills the area behind the status bar, so the status bar uses light text.
+ * The header at the top of each tab (and the sign-in screen): an icon in a
+ * lavender circle, then a big bold title and a short subtitle, sitting flat on
+ * the page colour. It also fills the area behind the status bar.
  */
 export function HeroHeader({ icon, logo, title, subtitle }: HeroProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   return (
     <View
-      className="bg-hero px-lg pb-lg"
+      className="bg-hero px-lg pb-sm"
       // The status-bar inset is only known at runtime.
       style={{ paddingTop: insets.top + spacing.md }}>
-      <View className="w-full max-w-content flex-row items-center gap-md self-center">
+      <View className="w-full max-w-content gap-sm self-center">
         {logo ? (
           // Decorative: the title next to it already names the app.
           <Image
             source={logo}
-            style={{ width: 64, height: 64, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' }}
+            style={{ width: 64, height: 64, borderRadius: 16 }}
             contentFit="cover"
             accessible={false}
             importantForAccessibility="no"
           />
         ) : (
           <View
-            className="h-12 w-12 items-center justify-center rounded-pill bg-on-hero/10"
+            className="h-11 w-11 items-center justify-center rounded-pill bg-surface"
             importantForAccessibility="no-hide-descendants">
-            <Ionicons name={icon} size={26} color={theme.onHero} />
+            <Ionicons name={icon} size={22} color={theme.primary} />
           </View>
         )}
-        <View className="flex-1 gap-0.5">
-          <ThemedText variant="heading" color="onHero" accessibilityRole="header">
-            {title}
-          </ThemedText>
-          {subtitle ? (
-            <ThemedText variant="small" color="heroMuted">
-              {subtitle}
-            </ThemedText>
-          ) : null}
-        </View>
+        <ThemedText variant="title" color="onHero" accessibilityRole="header">
+          {title}
+        </ThemedText>
+        {subtitle ? <ThemedText color="heroMuted">{subtitle}</ThemedText> : null}
       </View>
     </View>
   );

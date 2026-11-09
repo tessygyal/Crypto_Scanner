@@ -23,8 +23,8 @@ export function ChoiceChip({
       accessibilityLabel={accessibilityLabel ?? label}
       hitSlop={4}
       className={cn(
-        'min-h-10 items-center justify-center rounded-pill border px-md active:opacity-70',
-        selected ? 'border-primary bg-primary' : 'border-border bg-surface'
+        'min-h-12 items-center justify-center rounded-pill border-2 px-md active:scale-[0.97] active:opacity-80',
+        selected ? 'border-primary bg-primary' : 'border-border bg-background'
       )}>
       <ThemedText variant="smallBold" color={selected ? 'onPrimary' : 'text'}>
         {label}
