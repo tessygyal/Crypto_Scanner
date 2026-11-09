@@ -8,6 +8,11 @@ const color = (name) => `rgb(var(--color-${name}) / <alpha-value>)`;
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
+  // Must stay 'class'. With the default 'media', NativeWind on web throws
+  // "Cannot manually set color scheme, as dark mode is type 'media'" at startup.
+  // Dark mode still follows the phone/browser: colors come from useColorScheme()
+  // and the prefers-color-scheme block in global.css, not from dark: classes.
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
